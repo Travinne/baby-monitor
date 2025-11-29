@@ -6,7 +6,7 @@ import jwt
 import datetime
 from flask import current_app
 
-auth_bp = Blueprint('auth', __name__, url_prefix='/api')
+auth_bp = Blueprint('auth', __name__,)
 
 
 @auth_bp.route('/register', methods=['POST'])

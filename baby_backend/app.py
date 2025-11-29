@@ -68,7 +68,7 @@ protected_blueprints = [
 ]
 
 for bp, prefix in protected_blueprints:
-    app.register_blueprint(bp, url_prefix=prefix)
+    app.register_blueprint(bp, url_prefix="/api")
 
 @app.route('/')
 def home():
