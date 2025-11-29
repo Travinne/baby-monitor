@@ -1,9 +1,10 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from werkzeug.security import generate_password_hash
 from baby_backend.models import User
 from baby_backend.database import db
 import jwt
 import datetime
+import os
 
 register_bp = Blueprint('register_bp', __name__)
 
@@ -39,10 +40,12 @@ def register_user():
     db.session.add(user)
     db.session.commit()
 
+    jwt_secret = os.environ.get('JWT_SECRET', 'dev-secret')
+
     token = jwt.encode({
         'user_id': user.id,
         'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
-    }, 'secret_key', algorithm='HS256')
+    }, jwt_secret, algorithm='HS256')
 
     return jsonify({
         'message': 'Registration successful',
