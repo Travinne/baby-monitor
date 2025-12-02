@@ -1,4 +1,4 @@
-#!/home/sertravthegr88/desktop/my-projects/baby-monitor/baby_backend/venv/bin/python
+#!/home/sertravthegr88/desktop/my-projects/baby-monitor/baby_backend/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
