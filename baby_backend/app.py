@@ -25,32 +25,29 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///baby_monitor.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///baby_monitor.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'supersecretkey'
-
-
-app.config["JWT_SECRET_KEY"] = "super-secret-jwt" 
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a-super-secret-key')
+app.config["JWT_SECRET_KEY"] = os.environ.get('JWT_SECRET_KEY', "a-super-secret-jwt-key")
 app.config["JWT_TOKEN_LOCATION"] = ["headers"]
 app.config["JWT_HEADER_NAME"] = "Authorization"
 app.config["JWT_HEADER_TYPE"] = "Bearer"
-
-jwt = JWTManager(app)
-
-
 app.config['UPLOAD_FOLDER'] = 'static/uploads/baby_photos'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg'}
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+jwt = JWTManager(app)
 db.init_app(app)
 migrate = Migrate(app, db)
+
+app.register_blueprint(auth_bp, url_prefix="/api")
+
 
 @app.route('/static/uploads/baby_photos/<path:filename>')
 def get_uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 
-app.register_blueprint(auth_bp, url_prefix="/api")
 
 
 protected_blueprints = [
