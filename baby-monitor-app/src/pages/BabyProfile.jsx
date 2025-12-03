@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import BackButton from "../components/BackButton";
+import API from "../api/api";
 
 function BabyProfile() {
-  const token = localStorage.getItem("token");
-
   const [baby, setBaby] = useState({
     id: null,
     fullName: "",
@@ -20,25 +19,30 @@ function BabyProfile() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+
   const validateField = (name, value) => {
-    let newErrors = { ...errors };
+    const newErrors = { ...errors };
     if (name === "fullName" && value.trim().length < 2) {
       newErrors.fullName = "Name must be at least 2 characters";
     } else if (name === "dob" && value && new Date(value) > new Date()) {
       newErrors.dob = "Date cannot be in the future";
-    } else delete newErrors[name];
+    } else {
+      delete newErrors[name];
+    }
     setErrors(newErrors);
   };
 
   const handleChange = (e) => {
-    setBaby({ ...baby, [e.target.name]: e.target.value });
-    validateField(e.target.name, e.target.value);
+    const { name, value } = e.target;
+    setBaby({ ...baby, [name]: value });
+    validateField(name, value);
   };
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) return alert("Invalid image!");
+    if (!file.type.startsWith("image/")) return alert("Invalid image file");
     setBaby({
       ...baby,
       photo: URL.createObjectURL(file),
@@ -47,17 +51,14 @@ function BabyProfile() {
   };
 
   const fetchBaby = async () => {
+    setIsLoading(true);
     try {
-      const res = await fetch("http://127.0.0.1:5000/api/babyprofile/", {
+      const res = await API.get("/babyprofile/", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const data = await res.json();
-
-      if (!data || !data.id) {
-        setIsLoading(false);
-        return;
-      }
+      const data = res.data;
+      if (!data || !data.id) return;
 
       setBaby({
         id: data.id,
@@ -67,55 +68,56 @@ function BabyProfile() {
         weight: data.weight || "",
         height: data.height || "",
         notes: data.notes || "",
-        photo: data.photo ? `http://127.0.0.1:5000${data.photo}` : "",
+        photo: data.photo ? `${API.defaults.baseURL}${data.photo}` : "",
         photoFile: null,
       });
     } catch (err) {
-      console.log("Profile fetch failed:", err);
+      console.error("Error fetching baby profile:", err);
+      alert("Could not load baby profile");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleSave = async () => {
+   
     if (!baby.fullName || !baby.dob) {
-      return alert("Name and DOB are required!");
+      return alert("Full name and date of birth are required");
+    }
+
+    
+    if (Object.keys(errors).length > 0) {
+      return alert("Please fix the errors before saving");
     }
 
     setIsSaving(true);
 
-    const url = baby.id
-      ? `http://127.0.0.1:8000/api/babyprofile/${baby.id}`
-      : `http://127.0.0.1:8000/api/babyprofile/`;
-
-    const method = baby.id ? "PUT" : "POST";
-
     const formData = new FormData();
-    Object.entries({
-      fullName: baby.fullName,
-      dob: baby.dob,
-      gender: baby.gender,
-      weight: baby.weight,
-      height: baby.height,
-      notes: baby.notes,
-    }).forEach(([key, val]) => formData.append(key, val));
-
+    formData.append("fullName", baby.fullName);
+    formData.append("dob", baby.dob);
+    formData.append("gender", baby.gender);
+    formData.append("weight", baby.weight);
+    formData.append("height", baby.height);
+    formData.append("notes", baby.notes);
     if (baby.photoFile) formData.append("photo", baby.photoFile);
 
     try {
-      const res = await fetch(url, {
-        method,
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
+      if (baby.id) {
+        await API.put(`/babyprofile/${baby.id}/`, formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } else {
+        const res = await API.post("/babyprofile/", formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setBaby((prev) => ({ ...prev, id: res.data.id }));
+      }
 
-      if (!res.ok) throw new Error("Save failed!");
-
-      alert("Profile saved!");
+      alert("Profile saved successfully!");
       fetchBaby();
     } catch (err) {
-      console.log(err);
-      alert("Could not save profile");
+      console.error("Error saving profile:", err);
+      alert(err.response?.data?.message || "Could not save profile");
     } finally {
       setIsSaving(false);
     }
@@ -123,6 +125,7 @@ function BabyProfile() {
 
   useEffect(() => {
     fetchBaby();
+    
   }, []);
 
   if (isLoading) return <p className="loading">Loading...</p>;
@@ -149,7 +152,6 @@ function BabyProfile() {
         ) : (
           <div className="photo-placeholder">No Photo</div>
         )}
-
         <label htmlFor="photoInput" className="btn btn-secondary">
           {baby.photo ? "Change" : "Upload"} Photo
         </label>
@@ -162,15 +164,15 @@ function BabyProfile() {
         />
       </div>
 
-      <form className="form">
+      <form className="form" onSubmit={(e) => e.preventDefault()}>
         <label>Full Name</label>
         <input
           className="input"
           name="fullName"
           value={baby.fullName}
           onChange={handleChange}
-          placeholder="Baby's name"
         />
+        {errors.fullName && <p className="error-message">{errors.fullName}</p>}
 
         <label>Date of Birth</label>
         <input
@@ -180,22 +182,43 @@ function BabyProfile() {
           value={baby.dob}
           onChange={handleChange}
         />
+        {errors.dob && <p className="error-message">{errors.dob}</p>}
 
         <label>Gender</label>
-        <select className="input" name="gender" value={baby.gender} onChange={handleChange}>
+        <select
+          className="input"
+          name="gender"
+          value={baby.gender}
+          onChange={handleChange}
+        >
           <option value="">Select</option>
           <option value="Male">Boy</option>
           <option value="Female">Girl</option>
         </select>
 
         <label>Weight (kg)</label>
-        <input className="input" name="weight" value={baby.weight} onChange={handleChange} />
+        <input
+          className="input"
+          name="weight"
+          value={baby.weight}
+          onChange={handleChange}
+        />
 
         <label>Height (cm)</label>
-        <input className="input" name="height" value={baby.height} onChange={handleChange} />
+        <input
+          className="input"
+          name="height"
+          value={baby.height}
+          onChange={handleChange}
+        />
 
         <label>Notes</label>
-        <textarea className="input" name="notes" value={baby.notes} onChange={handleChange} />
+        <textarea
+          className="input"
+          name="notes"
+          value={baby.notes}
+          onChange={handleChange}
+        />
       </form>
 
       <button className="btn btn-secondary" onClick={handleSave}>

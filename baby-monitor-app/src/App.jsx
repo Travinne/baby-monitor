@@ -24,20 +24,18 @@ import BathTimeTracker from "./components/BathTime";
 
 import Navbar from "./components/NavBar";
 
-// ------------------------
-// Protected Route Component
-// ------------------------
+
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-  return children;
+  return token ? children : <Navigate to="/login" replace />;
 };
 
-// ------------------------
-// App Wrapper to handle navbar
-// ------------------------
+
+const GuestRoute = ({ children }) => {
+  const token = localStorage.getItem("token");
+  return token ? <Navigate to="/dashboard" replace /> : children;
+};
+
 function AppWrapper() {
   const location = useLocation();
   const noNavbarPages = ["/login", "/register"];
@@ -48,12 +46,26 @@ function AppWrapper() {
       {!hideNavbar && <Navbar />}
       <div className="app">
         <Routes>
-          {/* Public Routes */}
+     
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route
+            path="/login"
+            element={
+              <GuestRoute>
+                <Login />
+              </GuestRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <GuestRoute>
+                <Register />
+              </GuestRoute>
+            }
+          />
 
-          {/* Protected Routes */}
+      
           <Route
             path="/dashboard"
             element={
@@ -135,7 +147,7 @@ function AppWrapper() {
             }
           />
 
-          {/* Catch All */}
+        
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
@@ -143,9 +155,6 @@ function AppWrapper() {
   );
 }
 
-// ------------------------
-// Main App Component
-// ------------------------
 function App() {
   return (
     <Router>

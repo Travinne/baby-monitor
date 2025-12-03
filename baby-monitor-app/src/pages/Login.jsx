@@ -4,27 +4,25 @@ import API from "../api/api";
 
 function Login() {
   const navigate = useNavigate();
-
   const [formData, setFormData] = useState({
     username: "",
     password: "",
     rememberMe: false,
   });
-
   const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
+  
   useEffect(() => {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    if (token) {
-      navigate("/dashboard");
-    }
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (token) navigate("/dashboard");
   }, [navigate]);
 
+ 
   const validateField = (name, value) => {
     const newErrors = { ...errors };
-
     switch (name) {
       case "username":
         if (!value.trim()) newErrors.username = "Username is required";
@@ -39,22 +37,25 @@ function Login() {
       default:
         break;
     }
-
     setErrors(newErrors);
   };
 
+ 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     const newValue = type === "checkbox" ? checked : value;
     setFormData({ ...formData, [name]: newValue });
+
     if (type !== "checkbox") validateField(name, value);
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMsg("");
 
+ 
     validateField("username", formData.username);
     validateField("password", formData.password);
 
@@ -71,6 +72,7 @@ function Login() {
 
       const { token, user } = res.data;
 
+     
       if (formData.rememberMe) {
         localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(user));
@@ -80,9 +82,10 @@ function Login() {
       }
 
       navigate("/dashboard");
-
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || "Invalid login credentials");
+      setErrorMsg(
+        err.response?.data?.message || "Invalid login credentials"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -91,9 +94,13 @@ function Login() {
   return (
     <div className="login">
       <h2 className="login-title">Welcome Back</h2>
-      <p className="auth-subtitle">Sign in to continue tracking your baby's journey</p>
+      <p className="auth-subtitle">
+        Sign in to continue tracking your baby's journey
+      </p>
 
       <form onSubmit={handleSubmit} className="login-form">
+        {errorMsg && <p className="error-message">{errorMsg}</p>}
+
         <div className="form-group">
           <label htmlFor="username">Username</label>
           <input
@@ -144,13 +151,15 @@ function Login() {
         <button type="submit" className="btn login-btn" disabled={isSubmitting}>
           {isSubmitting ? "Signing in..." : "Login"}
         </button>
-
-        {errorMsg && <p className="error-message">{errorMsg}</p>}
       </form>
 
       <p className="register-link">
         Don’t have an account?{" "}
-        <button type="button" onClick={() => navigate("/register")} className="link-btn">
+        <button
+          type="button"
+          onClick={() => navigate("/register")}
+          className="link-btn"
+        >
           Register here
         </button>
       </p>
