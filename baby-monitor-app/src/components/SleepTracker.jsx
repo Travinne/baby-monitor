@@ -7,7 +7,7 @@ function SleepTracker() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_BASE = "http://127.0.0.1:5000/api/sleeps/";
+  const API_BASE = "http://127.0.0.1:8000/api/sleeps/";
 
   useEffect(() => {
     loadRecords();

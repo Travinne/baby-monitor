@@ -15,7 +15,7 @@ function FeedingTracker() {
   const [timeLeft, setTimeLeft] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
 
-  const API_BASE = "http://127.0.0.1:5000/api/feeding/";
+  const API_BASE = "http://127.0.0.1:8000/api/feeding/";
 
   useEffect(() => {
     loadFeedings();
