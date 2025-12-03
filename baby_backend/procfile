@@ -1,0 +1,2 @@
+
+web: gunicorn baby_backend.app:app
