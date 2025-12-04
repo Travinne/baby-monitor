@@ -83,6 +83,7 @@ function Register() {
         username: formData.username,
         email: formData.email,
         password: formData.password,
+        confirm_password: formData.confirmPassword, 
       });
 
    
