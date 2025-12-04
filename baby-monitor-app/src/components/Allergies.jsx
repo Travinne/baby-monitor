@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import BackButton from "./BackButton";
 
-const API_URL = "http://127.0.0.1:8000/api/allergies/";
+const API_URL = "https://baby-monitor-1.onrender.com/api/allergies/";
 
 export default function Allergies() {
   const [allergies, setAllergies] = useState([]);

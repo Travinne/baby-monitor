@@ -9,7 +9,7 @@ function GrowthTracker() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_BASE = "http://127.0.0.1:8000/api/growth/";
+  const API_BASE = "https://baby-monitor-1.onrender.com/api/growth/";
 
   useEffect(() => {
     loadEntries();
