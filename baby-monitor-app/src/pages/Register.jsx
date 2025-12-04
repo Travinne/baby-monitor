@@ -14,16 +14,15 @@ function Register() {
   const [errorMsg, setErrorMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Field validation
   const validateField = (name, value) => {
     const newErrors = { ...errors };
 
     switch (name) {
       case "username":
-        if (value.length < 3)
-          newErrors.username = "Username must be at least 3 characters";
+        if (value.length < 3) newErrors.username = "Username must be at least 3 characters";
         else if (!/^[a-zA-Z0-9_]+$/.test(value))
-          newErrors.username =
-            "Username can only contain letters, numbers, and underscores";
+          newErrors.username = "Username can only contain letters, numbers, and underscores";
         else delete newErrors.username;
         break;
 
@@ -34,17 +33,14 @@ function Register() {
         break;
 
       case "password":
-        if (value.length < 8)
-          newErrors.password = "Password must be at least 8 characters";
+        if (value.length < 8) newErrors.password = "Password must be at least 8 characters";
         else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value))
-          newErrors.password =
-            "Password must contain uppercase, lowercase, and a number";
+          newErrors.password = "Password must contain uppercase, lowercase, and a number";
         else delete newErrors.password;
         break;
 
       case "confirmPassword":
-        if (value !== formData.password)
-          newErrors.confirmPassword = "Passwords do not match";
+        if (value !== formData.password) newErrors.confirmPassword = "Passwords do not match";
         else delete newErrors.confirmPassword;
         break;
 
@@ -55,22 +51,21 @@ function Register() {
     setErrors(newErrors);
   };
 
+  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
     validateField(name, value);
   };
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMsg("");
 
-   
-    Object.keys(formData).forEach((key) =>
-      validateField(key, formData[key])
-    );
-
+    // Final validation before submit
+    Object.keys(formData).forEach((key) => validateField(key, formData[key]));
     if (Object.keys(errors).length > 0) {
       setIsSubmitting(false);
       setErrorMsg("Please fix the errors before submitting.");
@@ -78,25 +73,24 @@ function Register() {
     }
 
     try {
-
+      // Send POST request to Flask backend
       const res = await API.post("/register", {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        confirm_password: formData.confirmPassword, 
+        confirm_password: formData.confirmPassword, // ⚡ must match backend
       });
 
-   
+      // Store token and user for auto-login
       const { token, user } = res.data;
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
 
-
+      // Redirect to dashboard
       navigate("/dashboard");
     } catch (err) {
-      setErrorMsg(
-        err.response?.data?.message || "Registration failed. Try again."
-      );
+      // Display backend error message
+      setErrorMsg(err.response?.data?.message || "Registration failed. Try again.");
     } finally {
       setIsSubmitting(false);
     }
