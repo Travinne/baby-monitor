@@ -24,9 +24,11 @@ function Settings() {
       return;
     }
 
-    setUserId(storedUser.id);
+    const id = storedUser.id;
+    setUserId(id);
 
-    API.get(`/settings/${storedUser.id}`, {
+    // Fetch settings only after userId is set
+    API.get(`/settings/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
@@ -40,7 +42,7 @@ function Settings() {
           theme: data.theme || "light",
         }));
       })
-      .catch(() => alert("Failed to load user profile"));
+      .catch(() => alert("Failed to load user settings"));
   }, []);
 
   useEffect(() => {
@@ -65,10 +67,7 @@ function Settings() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Please log in first");
-      return;
-    }
+    if (!token) return alert("Please log in first");
 
     try {
       const payload = { ...settings };
@@ -101,10 +100,7 @@ function Settings() {
     if (confirmation !== "DELETE") return;
 
     const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Please log in first");
-      return;
-    }
+    if (!token) return alert("Please log in first");
 
     try {
       await API.delete(`/users/delete/${userId}`, {
@@ -137,43 +133,21 @@ function Settings() {
 
           <div className="form-group">
             <label htmlFor="username">Username</label>
-            <input
-              id="username"
-              type="text"
-              name="username"
-              value={settings.username}
-              onChange={handleChange}
-            />
+            <input id="username" type="text" name="username" value={settings.username} onChange={handleChange} />
           </div>
 
           <div className="form-group">
             <label htmlFor="fullName">Full Name</label>
-            <input
-              id="fullName"
-              type="text"
-              name="fullName"
-              value={settings.fullName}
-              onChange={handleChange}
-            />
+            <input id="fullName" type="text" name="fullName" value={settings.fullName} onChange={handleChange} />
           </div>
 
           <div className="form-group">
             <label htmlFor="email">Email Address</label>
-            <input
-              id="email"
-              type="email"
-              name="email"
-              value={settings.email}
-              onChange={handleChange}
-            />
+            <input id="email" type="email" name="email" value={settings.email} onChange={handleChange} />
           </div>
 
           <div className="form-group">
-            <button
-              type="button"
-              className="btn change-password-btn"
-              onClick={() => setShowPasswordForm(!showPasswordForm)}
-            >
+            <button type="button" className="btn change-password-btn" onClick={() => setShowPasswordForm(!showPasswordForm)}>
               {showPasswordForm ? "Cancel Password Change" : "Change Password"}
             </button>
           </div>
@@ -182,24 +156,12 @@ function Settings() {
             <>
               <div className="form-group">
                 <label htmlFor="oldPassword">Current Password</label>
-                <input
-                  id="oldPassword"
-                  type="password"
-                  name="oldPassword"
-                  value={settings.oldPassword}
-                  onChange={handleChange}
-                />
+                <input id="oldPassword" type="password" name="oldPassword" value={settings.oldPassword} onChange={handleChange} />
               </div>
 
               <div className="form-group">
                 <label htmlFor="newPassword">New Password</label>
-                <input
-                  id="newPassword"
-                  type="password"
-                  name="newPassword"
-                  value={settings.newPassword}
-                  onChange={handleChange}
-                />
+                <input id="newPassword" type="password" name="newPassword" value={settings.newPassword} onChange={handleChange} />
               </div>
             </>
           )}
@@ -208,12 +170,7 @@ function Settings() {
         <div className="settings-section">
           <h3>Preferences</h3>
           <label>
-            <input
-              type="checkbox"
-              name="notifications"
-              checked={settings.notifications}
-              onChange={handleChange}
-            />
+            <input type="checkbox" name="notifications" checked={settings.notifications} onChange={handleChange} />
             Enable Notifications
           </label>
 
