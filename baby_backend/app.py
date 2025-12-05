@@ -21,7 +21,8 @@ from .routes.auth_routes import auth_bp
 
 app = Flask(__name__)
 
-CORS(app,
+CORS(
+    app,
     origins=["https://baby-monitor-app.vercel.app"],
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
@@ -42,6 +43,7 @@ app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg'}
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+
 jwt = JWTManager(app)
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -50,29 +52,37 @@ with app.app_context():
     from baby_backend import models
     db.create_all()
 
+
 PUBLIC_ROUTES = [
     "/api/login",
     "/api/register"
 ]
 
+
 @app.before_request
 def protect_routes():
     if request.method == "OPTIONS":
         return {}, 200
-    if request.path in PUBLIC_ROUTES:
-        return
+
+
+    for route in PUBLIC_ROUTES:
+        if request.path.startswith(route):
+            return
+
+ 
     if request.path.startswith("/api"):
         try:
             verify_jwt_in_request()
         except:
             return jsonify({"message": "Login Required"}), 401
 
+
 @app.route('/static/uploads/baby_photos/<path:filename>')
 def get_uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-app.register_blueprint(auth_bp, url_prefix="/api")
 
+app.register_blueprint(auth_bp, url_prefix="/api")
 app.register_blueprint(allergies_bp, url_prefix="/api/allergies")
 app.register_blueprint(bath_bp, url_prefix="/api/baths")
 app.register_blueprint(checkup_bp, url_prefix="/api/checkups")
@@ -84,21 +94,6 @@ app.register_blueprint(babyprofile_bp, url_prefix="/api/babyprofile")
 app.register_blueprint(settings_bp, url_prefix="/api/settings")
 app.register_blueprint(notification_bp, url_prefix="/api/notifications")
 app.register_blueprint(dashboard_bp, url_prefix="/api/dashboard")
-
-@app.before_request
-def fix_cors_preflight():
-    if request.method == "OPTIONS":
-        return jsonify({"status": "ok"}), 200
-    
-    if request.path in ["/api/login", "/api/register"]:
-        return
-
-    if request.path.startswith("/api"):
-        try:
-            verify_jwt_in_request()
-        except:
-            return jsonify({"message": "Login Required"}), 401
-
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
