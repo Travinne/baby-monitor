@@ -8,14 +8,14 @@ auth_bp = Blueprint('auth_bp', __name__)
 
 @auth_bp.route('/register', methods=['POST'])
 def register_user():
-    """Handles new user registration."""
-    data = request.get_json()
+    data = request.get_json() or {}
+
     username = data.get('username')
     email = data.get('email')
     password = data.get('password')
     confirm_password = data.get('confirmPassword')
 
-    if not all([username, email, password, confirm_password]):
+    if not username or not email or not password or not confirm_password:
         return jsonify({'message': 'All fields are required'}), 400
 
     if password != confirm_password:
@@ -28,20 +28,16 @@ def register_user():
         return jsonify({'message': 'Email already exists'}), 409
 
     hashed_password = generate_password_hash(password)
-    new_user = User(
-        username=username,
-        email=email,
-        password=hashed_password
-    )
+    new_user = User(username=username, email=email, password=hashed_password)
+
     db.session.add(new_user)
     db.session.commit()
 
-  
-    access_token = create_access_token(identity=new_user.id)
+    token = create_access_token(identity=new_user.id)
 
     return jsonify({
         'message': 'Registration successful',
-        'token': access_token,
+        'token': token,
         'user': {
             'id': new_user.id,
             'username': new_user.username,
@@ -49,10 +45,11 @@ def register_user():
         }
     }), 201
 
+
 @auth_bp.route('/login', methods=['POST'])
 def login_user():
-    """Handles user login."""
-    data = request.get_json()
+    data = request.get_json() or {}
+
     email = data.get('email')
     password = data.get('password')
 
@@ -64,9 +61,10 @@ def login_user():
     if not user or not check_password_hash(user.password, password):
         return jsonify({'message': 'Invalid credentials'}), 401
 
-    access_token = create_access_token(identity=user.id)
+    token = create_access_token(identity=user.id)
+
     return jsonify({
-        'token': access_token,
+        'token': token,
         'user': {
             'id': user.id,
             'username': user.username,
