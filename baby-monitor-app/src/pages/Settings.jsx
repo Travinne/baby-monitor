@@ -9,38 +9,37 @@ function Settings() {
     oldPassword: "",
     newPassword: "",
     notifications: true,
-    theme: localStorage.getItem("theme") || "light"
+    theme: localStorage.getItem("theme") || "light",
   });
   const [isModified, setIsModified] = useState(false);
   const [userId, setUserId] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (!token || !storedUser) {
       window.location.href = "/login";
       return;
     }
 
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    if (!storedUser) return;
     setUserId(storedUser.id);
 
     API.get(`/settings/${storedUser.id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then(res => {
-        setSettings(prev => ({
-          ...prev,
-          username: res.data.username,
-          fullName: res.data.fullName || "",
-          email: res.data.email,
-          notifications: res.data.notifications,
-          theme: res.data.theme || "light",
+      .then((res) => {
+        const data = res.data;
+        setSettings({
+          username: data.username,
+          fullName: data.fullName || "",
+          email: data.email,
+          notifications: data.notifications,
+          theme: data.theme || "light",
           oldPassword: "",
-          newPassword: ""
-        }));
+          newPassword: "",
+        });
       })
-      .catch(() => alert("Failed to load user settings"));
+      .catch(() => alert("Failed to load user profile"));
   }, []);
 
   useEffect(() => {
@@ -50,21 +49,20 @@ function Settings() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
     setIsModified(true);
   };
 
   const handleThemeChange = (mode) => {
-    setSettings(prev => ({ ...prev, theme: mode }));
+    setSettings((prev) => ({ ...prev, theme: mode }));
     setIsModified(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const token = localStorage.getItem("token");
     if (!token) {
       alert("Please log in first");
@@ -78,10 +76,13 @@ function Settings() {
 
       alert("Settings updated successfully!");
       setIsModified(false);
-      setSettings(prev => ({ ...prev, oldPassword: "", newPassword: "" }));
+      setSettings((prev) => ({ ...prev, oldPassword: "", newPassword: "" }));
 
-      // Update localStorage user info if username or email changed
-      const updatedUser = { ...JSON.parse(localStorage.getItem("user")), username: response.data.settings.username, email: response.data.settings.email };
+      const updatedUser = {
+        ...JSON.parse(localStorage.getItem("user")),
+        username: response.data.settings.username,
+        email: response.data.settings.email,
+      };
       localStorage.setItem("user", JSON.stringify(updatedUser));
     } catch (err) {
       alert(err.response?.data?.message || "Failed to update settings");
