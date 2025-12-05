@@ -43,7 +43,6 @@ with app.app_context():
         from baby_backend import models
         db.create_all()
 
-app.register_blueprint(auth_bp, url_prefix="/api")
 
 PUBLIC_ROUTES = [
     "/api/login",

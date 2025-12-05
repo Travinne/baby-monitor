@@ -14,7 +14,7 @@ function Register() {
   const [errorMsg, setErrorMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Field validation
+ 
   const validateField = (name, value) => {
     const newErrors = { ...errors };
 
@@ -51,20 +51,20 @@ function Register() {
     setErrors(newErrors);
   };
 
-  // Handle input changes
+ 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
     validateField(name, value);
   };
 
-  // Handle form submission
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMsg("");
 
-    // Final validation before submit
+
     Object.keys(formData).forEach((key) => validateField(key, formData[key]));
     if (Object.keys(errors).length > 0) {
       setIsSubmitting(false);
@@ -73,23 +73,23 @@ function Register() {
     }
 
     try {
-      // Send POST request to Flask backend
+      
       const res = await API.post("/register", {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        confirm_password: formData.confirmPassword, // ⚡ must match backend
+        confirm_password: formData.confirmPassword, 
       });
 
-      // Store token and user for auto-login
+     
       const { token, user } = res.data;
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
 
-      // Redirect to dashboard
+    
       navigate("/dashboard");
     } catch (err) {
-      // Display backend error message
+    
       setErrorMsg(err.response?.data?.message || "Registration failed. Try again.");
     } finally {
       setIsSubmitting(false);
