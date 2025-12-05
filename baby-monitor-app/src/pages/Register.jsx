@@ -14,82 +14,74 @@ function Register() {
   const [errorMsg, setErrorMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
- 
   const validateField = (name, value) => {
-    const newErrors = { ...errors };
-
     switch (name) {
       case "username":
-        if (value.length < 3) newErrors.username = "Username must be at least 3 characters";
-        else if (!/^[a-zA-Z0-9_]+$/.test(value))
-          newErrors.username = "Username can only contain letters, numbers, and underscores";
-        else delete newErrors.username;
-        break;
+        if (value.length < 3) return "Username must be at least 3 characters";
+        if (!/^[a-zA-Z0-9_]+$/.test(value))
+          return "Username can only contain letters, numbers, and underscores";
+        return null;
 
       case "email":
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
-          newErrors.email = "Please enter a valid email address";
-        else delete newErrors.email;
-        break;
+          return "Please enter a valid email address";
+        return null;
 
       case "password":
-        if (value.length < 8) newErrors.password = "Password must be at least 8 characters";
-        else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value))
-          newErrors.password = "Password must contain uppercase, lowercase, and a number";
-        else delete newErrors.password;
-        break;
+        if (value.length < 8) return "Password must be at least 8 characters";
+        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value))
+          return "Password must contain uppercase, lowercase, and a number";
+        return null;
 
       case "confirmPassword":
-        if (value !== formData.password) newErrors.confirmPassword = "Passwords do not match";
-        else delete newErrors.confirmPassword;
-        break;
+        if (value !== formData.password) return "Passwords do not match";
+        return null;
 
       default:
-        break;
+        return null;
     }
-
-    setErrors(newErrors);
   };
 
- 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    validateField(name, value);
+    setErrors({ ...errors, [name]: validateField(name, value) });
   };
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMsg("");
 
+    const newErrors = {};
+    Object.keys(formData).forEach((key) => {
+      const error = validateField(key, formData[key]);
+      if (error) newErrors[key] = error;
+    });
 
-    Object.keys(formData).forEach((key) => validateField(key, formData[key]));
-    if (Object.keys(errors).length > 0) {
-      setIsSubmitting(false);
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       setErrorMsg("Please fix the errors before submitting.");
+      setIsSubmitting(false);
       return;
     }
 
     try {
-      
       const res = await API.post("/register", {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        confirmPassword: formData.confirmPassword, 
+        confirmPassword: formData.confirmPassword,
       });
 
-     
       const { token, user } = res.data;
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
 
-    
+      API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
       navigate("/dashboard");
     } catch (err) {
-    
       setErrorMsg(err.response?.data?.message || "Registration failed. Try again.");
     } finally {
       setIsSubmitting(false);
@@ -141,9 +133,7 @@ function Register() {
           onChange={handleChange}
           required
         />
-        {errors.confirmPassword && (
-          <p className="error-message">{errors.confirmPassword}</p>
-        )}
+        {errors.confirmPassword && <p className="error-message">{errors.confirmPassword}</p>}
 
         <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Creating Account..." : "Register"}
