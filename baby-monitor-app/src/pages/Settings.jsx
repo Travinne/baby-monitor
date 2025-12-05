@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
+import API from "../api/api";
 
 function Settings() {
   const [settings, setSettings] = useState({
+    username: "",
     fullName: "",
     email: "",
     oldPassword: "",
@@ -9,8 +11,6 @@ function Settings() {
     notifications: true,
     theme: localStorage.getItem("theme") || "light"
   });
-
-  const [errors, setErrors] = useState({});
   const [isModified, setIsModified] = useState(false);
   const [userId, setUserId] = useState(null);
 
@@ -21,22 +21,26 @@ function Settings() {
       return;
     }
 
-  fetch(`http://127.0.0.1:5000/api/settings/${userId}`,{
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (!storedUser) return;
+    setUserId(storedUser.id);
+
+    API.get(`/settings/${storedUser.id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.json())
-      .then((data) => {
-        setSettings({
-          fullName: data.full_name || "",
-          email: data.email || "",
-          notifications: true,
-          theme: localStorage.getItem("theme") || "light",
+      .then(res => {
+        setSettings(prev => ({
+          ...prev,
+          username: res.data.username,
+          fullName: res.data.fullName || "",
+          email: res.data.email,
+          notifications: res.data.notifications,
+          theme: res.data.theme || "light",
           oldPassword: "",
           newPassword: ""
-        });
-        setUserId(data.id);
+        }));
       })
-      .catch(() => alert("Failed to load user profile"));
+      .catch(() => alert("Failed to load user settings"));
   }, []);
 
   useEffect(() => {
@@ -67,22 +71,20 @@ function Settings() {
       return;
     }
 
-    const response = await fetch(`http://127.0.0.1:5000/api/settings/${userId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(settings),
-    });
+    try {
+      const response = await API.put(`/settings/${userId}`, settings, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    const data = await response.json();
-    if (response.ok) {
       alert("Settings updated successfully!");
       setIsModified(false);
       setSettings(prev => ({ ...prev, oldPassword: "", newPassword: "" }));
-    } else {
-      alert(data.error || "Failed to update settings");
+
+      // Update localStorage user info if username or email changed
+      const updatedUser = { ...JSON.parse(localStorage.getItem("user")), username: response.data.settings.username, email: response.data.settings.email };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to update settings");
     }
   };
 
@@ -96,16 +98,14 @@ function Settings() {
       return;
     }
 
-    const response = await fetch(`http://127.0.0.1:5000/api/users/delete/${userId}`,{
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (response.ok) {
+    try {
+      await API.delete(`/users/delete/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       alert("Account deleted successfully");
       localStorage.clear();
       window.location.href = "/";
-    } else {
+    } catch {
       alert("Failed to delete account");
     }
   };
@@ -128,15 +128,24 @@ function Settings() {
           <h3>Profile Information</h3>
 
           <div className="form-group">
+            <label htmlFor="username">Username</label>
+            <input
+              id="username"
+              type="text"
+              name="username"
+              value={settings.username}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="form-group">
             <label htmlFor="fullName">Full Name</label>
             <input
               id="fullName"
               type="text"
               name="fullName"
-              className="input"
               value={settings.fullName}
               onChange={handleChange}
-              placeholder="Enter your full name"
             />
           </div>
 
@@ -146,10 +155,8 @@ function Settings() {
               id="email"
               type="email"
               name="email"
-              className="input"
               value={settings.email}
               onChange={handleChange}
-              placeholder="your.email@example.com"
             />
           </div>
 
@@ -159,10 +166,8 @@ function Settings() {
               id="oldPassword"
               type="password"
               name="oldPassword"
-              className="input"
               value={settings.oldPassword}
               onChange={handleChange}
-              placeholder="Enter your current password"
             />
           </div>
 
@@ -172,10 +177,8 @@ function Settings() {
               id="newPassword"
               type="password"
               name="newPassword"
-              className="input"
               value={settings.newPassword}
               onChange={handleChange}
-              placeholder="Enter new password"
             />
           </div>
         </div>
@@ -193,41 +196,27 @@ function Settings() {
           </label>
 
           <div className="theme-toggle">
-            <button
-              type="button"
-              className={`btn-theme ${settings.theme === "light" ? "activate-theme" : ""}`}
-              onClick={() => handleThemeChange("light")}
-            >
+            <button type="button" onClick={() => handleThemeChange("light")} className={settings.theme === "light" ? "active" : ""}>
               Light Mode
             </button>
-            <button
-              type="button"
-              className={`btn-theme ${settings.theme === "dark" ? "activate-theme" : ""}`}
-              onClick={() => handleThemeChange("dark")}
-            >
+            <button type="button" onClick={() => handleThemeChange("dark")} className={settings.theme === "dark" ? "active" : ""}>
               Dark Mode
             </button>
           </div>
         </div>
 
-        <button type="submit" className="btn save-btn" disabled={!isModified}>
-          Save Changes
-        </button>
+        <button type="submit" disabled={!isModified}>Save Changes</button>
       </form>
 
       <div className="settings-section danger-zone">
-        <h3>Danger Zone</h3>
-        <button className="btn delete-btn" onClick={handleDeleteAccount}>
-          Delete Account
-        </button>
+        <button onClick={handleDeleteAccount}>Delete Account</button>
       </div>
 
       <div className="settings-section logout-section">
-        <button className="btn remove-btn" onClick={handleLogout}>
-          Logout
-        </button>
+        <button onClick={handleLogout}>Logout</button>
       </div>
     </div>
   );
 }
+
 export default Settings;
