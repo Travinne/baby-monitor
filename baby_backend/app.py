@@ -22,11 +22,13 @@ from .routes.auth_routes import auth_bp
 app = Flask(__name__)
 
 CORS(app,
-     resources={r"/api/*": {"origins": "*"}},
-     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-     allow_headers=["Content-Type", "Authorization"],
-     supports_credentials=True
+    origins=["https://baby-monitor-app.vercel.app"],
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+    supports_credentials=True,
+    expose_headers=["Content-Type", "Authorization"]
 )
+
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///baby_monitor.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -83,9 +85,20 @@ app.register_blueprint(settings_bp, url_prefix="/api/settings")
 app.register_blueprint(notification_bp, url_prefix="/api/notifications")
 app.register_blueprint(dashboard_bp, url_prefix="/api/dashboard")
 
-@app.route('/')
-def home():
-    return jsonify({"message": "API Running"})
+@app.before_request
+def fix_cors_preflight():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+    
+    if request.path in ["/api/login", "/api/register"]:
+        return
+
+    if request.path.startswith("/api"):
+        try:
+            verify_jwt_in_request()
+        except:
+            return jsonify({"message": "Login Required"}), 401
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
