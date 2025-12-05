@@ -6,17 +6,19 @@ function Settings() {
     username: "",
     fullName: "",
     email: "",
-    oldPassword: "",
-    newPassword: "",
     notifications: true,
     theme: localStorage.getItem("theme") || "light",
+    oldPassword: "",
+    newPassword: "",
   });
   const [isModified, setIsModified] = useState(false);
   const [userId, setUserId] = useState(null);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUser = JSON.parse(localStorage.getItem("user"));
+
     if (!token || !storedUser) {
       window.location.href = "/login";
       return;
@@ -29,15 +31,14 @@ function Settings() {
     })
       .then((res) => {
         const data = res.data;
-        setSettings({
+        setSettings((prev) => ({
+          ...prev,
           username: data.username,
           fullName: data.fullName || "",
           email: data.email,
           notifications: data.notifications,
           theme: data.theme || "light",
-          oldPassword: "",
-          newPassword: "",
-        });
+        }));
       })
       .catch(() => alert("Failed to load user profile"));
   }, []);
@@ -70,7 +71,13 @@ function Settings() {
     }
 
     try {
-      const response = await API.put(`/settings/${userId}`, settings, {
+      const payload = { ...settings };
+      if (!showPasswordForm) {
+        delete payload.oldPassword;
+        delete payload.newPassword;
+      }
+
+      const response = await API.put(`/settings/${userId}`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -162,26 +169,40 @@ function Settings() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="oldPassword">Current Password</label>
-            <input
-              id="oldPassword"
-              type="password"
-              name="oldPassword"
-              value={settings.oldPassword}
-              onChange={handleChange}
-            />
+            <button
+              type="button"
+              className="btn change-password-btn"
+              onClick={() => setShowPasswordForm(!showPasswordForm)}
+            >
+              {showPasswordForm ? "Cancel Password Change" : "Change Password"}
+            </button>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="newPassword">New Password</label>
-            <input
-              id="newPassword"
-              type="password"
-              name="newPassword"
-              value={settings.newPassword}
-              onChange={handleChange}
-            />
-          </div>
+          {showPasswordForm && (
+            <>
+              <div className="form-group">
+                <label htmlFor="oldPassword">Current Password</label>
+                <input
+                  id="oldPassword"
+                  type="password"
+                  name="oldPassword"
+                  value={settings.oldPassword}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="newPassword">New Password</label>
+                <input
+                  id="newPassword"
+                  type="password"
+                  name="newPassword"
+                  value={settings.newPassword}
+                  onChange={handleChange}
+                />
+              </div>
+            </>
+          )}
         </div>
 
         <div className="settings-section">
