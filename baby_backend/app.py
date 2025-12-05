@@ -2,7 +2,6 @@ from flask import Flask, send_from_directory, jsonify, request
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, verify_jwt_in_request
 from flask_migrate import Migrate
-from werkzeug.utils import secure_filename
 import os
 
 from .database import db
@@ -21,7 +20,13 @@ from .routes.dashboard_routes import dashboard_bp
 from .routes.auth_routes import auth_bp
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+
+CORS(app,
+     resources={r"/api/*": {"origins": "*"}},
+     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+     allow_headers=["Content-Type", "Authorization"],
+     supports_credentials=True
+)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///baby_monitor.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -40,9 +45,8 @@ db.init_app(app)
 migrate = Migrate(app, db)
 
 with app.app_context():
-        from baby_backend import models
-        db.create_all()
-
+    from baby_backend import models
+    db.create_all()
 
 PUBLIC_ROUTES = [
     "/api/login",
@@ -50,7 +54,9 @@ PUBLIC_ROUTES = [
 ]
 
 @app.before_request
-def protect_api_routes():
+def protect_routes():
+    if request.method == "OPTIONS":
+        return {}, 200
     if request.path in PUBLIC_ROUTES:
         return
     if request.path.startswith("/api"):
@@ -63,22 +69,19 @@ def protect_api_routes():
 def get_uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-protected_blueprints = [
-    (allergies_bp, "/api/allergies"),
-    (bath_bp, "/api/baths"),
-    (checkup_bp, "/api/checkups"),
-    (diaper_bp, "/api/diapers"),
-    (feed_bp, "/api/feeding"),
-    (sleep_bp, "/api/sleeps"),
-    (growth_bp, "/api/growth"),
-    (babyprofile_bp, "/api/babyprofile"),
-    (settings_bp, "/api/settings"),
-    (notification_bp, "/api/notifications"),
-    (dashboard_bp, "/api/dashboard")
-]
+app.register_blueprint(auth_bp, url_prefix="/api")
 
-for bp, prefix in protected_blueprints:
-    app.register_blueprint(bp, url_prefix=prefix)
+app.register_blueprint(allergies_bp, url_prefix="/api/allergies")
+app.register_blueprint(bath_bp, url_prefix="/api/baths")
+app.register_blueprint(checkup_bp, url_prefix="/api/checkups")
+app.register_blueprint(diaper_bp, url_prefix="/api/diapers")
+app.register_blueprint(feed_bp, url_prefix="/api/feeding")
+app.register_blueprint(sleep_bp, url_prefix="/api/sleeps")
+app.register_blueprint(growth_bp, url_prefix="/api/growth")
+app.register_blueprint(babyprofile_bp, url_prefix="/api/babyprofile")
+app.register_blueprint(settings_bp, url_prefix="/api/settings")
+app.register_blueprint(notification_bp, url_prefix="/api/notifications")
+app.register_blueprint(dashboard_bp, url_prefix="/api/dashboard")
 
 @app.route('/')
 def home():
