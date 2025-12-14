@@ -20,15 +20,21 @@ from .routes.dashboard_routes import dashboard_bp
 
 app = Flask(__name__)
 
+# CORS setup: allow multiple origins
 CORS(
     app,
-    origins=["https://baby-monitor-mf1e.vercel.app"],
+    origins=[
+        "https://baby-monitor-mf1e.vercel.app",
+        "https://baby-monitor-app.vercel.app",
+        "http://localhost:5173"  # local dev
+    ],
     supports_credentials=True,
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
     expose_headers=["Content-Type", "Authorization"]
 )
 
+# Flask config
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "DATABASE_URL", "sqlite:///baby_monitor.db"
 )
@@ -39,6 +45,7 @@ app.config["JWT_SECRET_KEY"] = os.environ.get(
 app.config["UPLOAD_FOLDER"] = "static/uploads/baby_photos"
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
+# Initialize extensions
 jwt = JWTManager(app)
 db.init_app(app)
 Migrate(app, db)
@@ -47,21 +54,26 @@ with app.app_context():
     from baby_backend import models
     db.create_all()
 
+# Public routes that don't require JWT
 PUBLIC_ROUTES = ["/api/login", "/api/register"]
 
 @app.before_request
 def protect_routes():
+    # Always allow preflight OPTIONS requests
     if request.method == "OPTIONS":
         return {}, 200
+    # Allow public routes
     for route in PUBLIC_ROUTES:
         if request.path.startswith(route):
             return
+    # Require JWT for all other /api routes
     if request.path.startswith("/api"):
         try:
             verify_jwt_in_request()
         except:
             return jsonify({"message": "Login Required"}), 401
 
+# Static files (uploaded baby photos)
 @app.route("/static/uploads/baby_photos/<path:filename>")
 def get_uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
