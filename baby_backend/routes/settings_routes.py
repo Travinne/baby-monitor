@@ -1,8 +1,8 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from baby_backend.database import db
-from baby_backend.models import User, UserSettings
+from database import db
+from models import User, UserSettings
 
 settings_bp = Blueprint("settings_bp", __name__, url_prefix="/settings")
 
