@@ -1,6 +1,6 @@
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, jsonify, request
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import JWTManager, verify_jwt_in_request
 from flask_migrate import Migrate
 import os
 
@@ -23,7 +23,10 @@ app = Flask(__name__)
 CORS(
     app,
     origins=["https://baby-monitor-app.vercel.app"],
-    supports_credentials=True
+    supports_credentials=True,
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+    expose_headers=["Content-Type", "Authorization"]
 )
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
@@ -33,11 +36,10 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = os.environ.get(
     "JWT_SECRET_KEY", "a-super-secret-jwt-key"
 )
-
 app.config["UPLOAD_FOLDER"] = "static/uploads/baby_photos"
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-JWTManager(app)
+jwt = JWTManager(app)
 db.init_app(app)
 Migrate(app, db)
 
@@ -45,11 +47,26 @@ with app.app_context():
     from baby_backend import models
     db.create_all()
 
+PUBLIC_ROUTES = ["/api/login", "/api/register"]
+
+@app.before_request
+def protect_routes():
+    if request.method == "OPTIONS":
+        return {}, 200
+    for route in PUBLIC_ROUTES:
+        if request.path.startswith(route):
+            return
+    if request.path.startswith("/api"):
+        try:
+            verify_jwt_in_request()
+        except:
+            return jsonify({"message": "Login Required"}), 401
+
 @app.route("/static/uploads/baby_photos/<path:filename>")
 def get_uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
-
+# Register Blueprints
 app.register_blueprint(auth_bp, url_prefix="/api")
 app.register_blueprint(allergies_bp, url_prefix="/api/allergies")
 app.register_blueprint(bath_bp, url_prefix="/api/baths")

@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../api/api";
+import { registerUser } from "../api/auth";
 
-function Register() {
+export default function Register() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
     confirmPassword: "",
+    rememberMe: false,
   });
   const [errors, setErrors] = useState({});
   const [errorMsg, setErrorMsg] = useState("");
@@ -43,9 +44,10 @@ function Register() {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-    setErrors({ ...errors, [name]: validateField(name, value) });
+    const { name, value, type, checked } = e.target;
+    const newValue = type === "checkbox" ? checked : value;
+    setFormData({ ...formData, [name]: newValue });
+    setErrors({ ...errors, [name]: validateField(name, newValue) });
   };
 
   const handleSubmit = async (e) => {
@@ -67,21 +69,25 @@ function Register() {
     }
 
     try {
-      const res = await API.post("/register", {
+      const res = await registerUser({
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        confirmPassword: formData.confirmPassword,
       });
 
-      const { token, user } = res.data;
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+      const { token, user } = res;
 
-      API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      if (formData.rememberMe) {
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+      } else {
+        sessionStorage.setItem("token", token);
+        sessionStorage.setItem("user", JSON.stringify(user));
+      }
 
       navigate("/dashboard");
     } catch (err) {
+      console.error(err);
       setErrorMsg(err.response?.data?.message || "Registration failed. Try again.");
     } finally {
       setIsSubmitting(false);
@@ -135,6 +141,16 @@ function Register() {
         />
         {errors.confirmPassword && <p className="error-message">{errors.confirmPassword}</p>}
 
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            name="rememberMe"
+            checked={formData.rememberMe}
+            onChange={handleChange}
+          />
+          Remember me
+        </label>
+
         <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Creating Account..." : "Register"}
         </button>
@@ -142,5 +158,3 @@ function Register() {
     </div>
   );
 }
-
-export default Register;

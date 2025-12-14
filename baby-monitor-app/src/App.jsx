@@ -13,29 +13,29 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import BabyProfile from "./pages/BabyProfile";
 import Settings from "./pages/Settings";
-
-import FeedTracker from "./components/FeedTracker";
-import SleepTracker from "./components/SleepTracker";
-import DiaperTracker from "./components/DiaperTracker";
-import GrowthChart from "./components/GrowthChart";
-import CheckUps from "./components/CheckUps";
-import Allergies from "./components/Allergies";
-import BathTimeTracker from "./components/BathTime";
+import FeedTracker from "./pages/FeedTracker";
+import SleepTracker from "./pages/SleepTracker";
+import DiaperTracker from "./pages/DiaperTracker";
+import GrowthChart from "./pages/GrowthChart";
+import CheckUps from "./pages/CheckUps";
+import Allergies from "./pages/Allergies";
+import BathTimeTracker from "./pages/BathTime";
 
 import Navbar from "./components/NavBar";
 
-
+// Protected route: only for logged-in users
 const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
   return token ? children : <Navigate to="/login" replace />;
 };
 
-
+// Guest route: only for non-logged-in users
 const GuestRoute = ({ children }) => {
-  const token = localStorage.getItem("token");
-  return token ? <Navigate to="/dashboard" replace /> : children;
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+  return token ? <Navigate to="/home" replace /> : children;
 };
 
+// Wrapper to conditionally show Navbar
 function AppWrapper() {
   const location = useLocation();
   const noNavbarPages = ["/login", "/register"];
@@ -46,8 +46,10 @@ function AppWrapper() {
       {!hideNavbar && <Navbar />}
       <div className="app">
         <Routes>
-     
+          {/* Public Home page */}
           <Route path="/" element={<Home />} />
+
+          {/* Guest-only pages */}
           <Route
             path="/login"
             element={
@@ -65,7 +67,7 @@ function AppWrapper() {
             }
           />
 
-      
+          {/* Protected pages */}
           <Route
             path="/dashboard"
             element={
@@ -147,7 +149,7 @@ function AppWrapper() {
             }
           />
 
-        
+          {/* Catch-all redirect */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

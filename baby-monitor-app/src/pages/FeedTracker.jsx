@@ -1,95 +1,75 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import BackButton from "./BackButton";
+import { getFeedings, addFeeding, deleteFeeding } from "../api/feeding";
 
-function FeedingTracker() {
+export default function FeedingTracker() {
   const [feedings, setFeedings] = useState([]);
-  const [formData, setFormData] = useState({
-    food_type: "",
-    amount: "",
-    notes: "",
-  });
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   const [lastFeed, setLastFeed] = useState(null);
 
+  const [formData, setFormData] = useState({ food_type: "", amount: "", notes: "" });
   const [hours, setHours] = useState("");
   const [minutes, setMinutes] = useState("");
   const [timeLeft, setTimeLeft] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
 
-  const API_BASE = "https://baby-monitor-1.onrender.com/api/feeding/";
-
-  useEffect(() => {
-    loadFeedings();
-  }, []);
-
-  const loadFeedings = async () => {
+  const fetchFeedings = async () => {
+    setLoading(true);
     try {
-      const res = await fetch(API_BASE);
-      if (!res.ok) throw new Error("Failed to fetch feeding data");
-
-      const data = await res.json();
-      const sorted = Array.isArray(data)
-        ? data.sort(
-            (a, b) =>
-              new Date(b.time || b.date || 0) - new Date(a.time || a.date || 0)
-          )
-        : [];
-
+      const data = await getFeedings();
+      const sorted = data.sort((a, b) => new Date(b.time) - new Date(a.time));
       setFeedings(sorted);
       if (sorted.length > 0) setLastFeed(sorted[0].time);
     } catch (err) {
-      console.error("Error loading feeding data:", err);
+      console.error(err);
+      setMessage("Failed to load feeding records!");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
+  useEffect(() => {
+    fetchFeedings();
+  }, []);
+
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.food_type || !formData.amount) {
-      alert("Please fill in the required fields.");
-      return;
-    }
-
-    const newFeed = {
-      food_type: formData.food_type.trim(),
-      amount: formData.amount.trim(),
-      notes: formData.notes.trim(),
-      time: new Date().toISOString(),
-    };
+    if (!formData.food_type || !formData.amount) return alert("Please fill in required fields.");
+    setSubmitting(true);
+    setMessage(null);
 
     try {
-      const res = await fetch(API_BASE, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newFeed),
-      });
-      if (!res.ok) throw new Error("Failed to add feeding record");
-
-      await loadFeedings();
+      const newFeed = { ...formData, time: new Date().toISOString() };
+      const added = await addFeeding(newFeed);
+      setFeedings([added, ...feedings]);
+      setLastFeed(added.time);
       setFormData({ food_type: "", amount: "", notes: "" });
+      setMessage("Feeding record added!");
     } catch (err) {
-      console.error("Error adding feeding:", err);
-      alert("Error adding feeding record.");
+      console.error(err);
+      setMessage("Failed to add feeding record!");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this record?")) return;
-
+    if (!window.confirm("Delete this feeding record?")) return;
     try {
-      const res = await fetch(`${API_BASE}/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete record");
-      setFeedings((prev) => prev.filter((f) => f.id !== id));
+      await deleteFeeding(id);
+      setFeedings(feedings.filter((f) => f.id !== id));
+      setMessage("Record deleted!");
     } catch (err) {
-      console.error("Error deleting feeding:", err);
+      console.error(err);
+      setMessage("Failed to delete feeding record!");
     }
   };
 
+  // Timer
   useEffect(() => {
     let countdown;
     if (isRunning && timeLeft > 0) {
@@ -106,10 +86,7 @@ function FeedingTracker() {
   const handleStartTimer = () => {
     const h = parseInt(hours) || 0;
     const m = parseInt(minutes) || 0;
-    if (h === 0 && m === 0) {
-      alert("Please enter hours or minutes");
-      return;
-    }
+    if (h === 0 && m === 0) return alert("Please enter hours or minutes");
     setTimeLeft(h * 3600 + m * 60);
     setIsRunning(true);
   };
@@ -129,22 +106,24 @@ function FeedingTracker() {
   };
 
   const playAlarm = () => {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    oscillator.frequency.value = 1000;
-    oscillator.type = "square";
-    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-    oscillator.start();
-    setTimeout(() => oscillator.stop(), 800);
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = 1000;
+    osc.type = "square";
+    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    osc.start();
+    setTimeout(() => osc.stop(), 800);
   };
 
   return (
     <div className="container">
       <BackButton />
       <h2 className="title">Feeding Tracker</h2>
+
+      {message && <p className="info-message">{message}</p>}
 
       {lastFeed ? (
         <p className="last-feed">
@@ -155,45 +134,36 @@ function FeedingTracker() {
       )}
 
       <form onSubmit={handleSubmit} className="form">
-        <label>Food Type</label>
         <input
-          type="text"
           name="food_type"
           value={formData.food_type}
           onChange={handleChange}
-          placeholder="e.g., Milk, Porridge"
-          className="select"
+          placeholder="Food Type (e.g., Milk)"
           required
         />
-
-        <label>Amount</label>
         <input
-          type="text"
           name="amount"
           value={formData.amount}
           onChange={handleChange}
-          placeholder="e.g., 120ml or 1 cup"
-          className="select"
+          placeholder="Amount (e.g., 120ml)"
           required
         />
-
-        <label>Notes (optional)</label>
         <textarea
           name="notes"
           value={formData.notes}
           onChange={handleChange}
-          placeholder="e.g., Baby didn’t finish"
-          className="select"
+          placeholder="Notes (optional)"
           rows="2"
         />
-
-        <button type="submit" className="btn">
-          Add Feeding
+        <button type="submit" className="btn" disabled={submitting}>
+          {submitting ? "Saving..." : "Add Feeding"}
         </button>
       </form>
 
       <h3 className="history-title">Feeding History</h3>
-      {feedings.length === 0 ? (
+      {loading ? (
+        <p>Loading...</p>
+      ) : feedings.length === 0 ? (
         <p className="empty">No feeding records yet</p>
       ) : (
         <ul className="log-list">
@@ -201,22 +171,11 @@ function FeedingTracker() {
             <li key={feed.id} className="log-item">
               <div>
                 <strong>{feed.food_type}</strong> — {feed.amount}
-                {feed.notes && (
-                  <p style={{ fontSize: "0.85em", color: "#666" }}>
-                    {feed.notes}
-                  </p>
-                )}
-                <p style={{ fontSize: "0.85em", color: "#999" }}>
-                  {feed.time
-                    ? new Date(feed.time).toLocaleString()
-                    : "Unknown time"}
-                </p>
+                {feed.notes && <p className="log-notes">{feed.notes}</p>}
+                <p className="log-time">{new Date(feed.time).toLocaleString()}</p>
               </div>
-              <button
-                onClick={() => handleDelete(feed.id)}
-                className="btn delete-btn"
-              >
-                Delete
+              <button className="btn delete-btn" onClick={() => handleDelete(feed.id)}>
+                Remove
               </button>
             </li>
           ))}
@@ -232,7 +191,6 @@ function FeedingTracker() {
           placeholder="Hours"
           value={hours}
           onChange={(e) => setHours(e.target.value)}
-          className="select"
           disabled={isRunning}
         />
         <input
@@ -242,7 +200,6 @@ function FeedingTracker() {
           placeholder="Minutes"
           value={minutes}
           onChange={(e) => setMinutes(e.target.value)}
-          className="select"
           disabled={isRunning}
         />
         {!isRunning ? (
@@ -256,11 +213,7 @@ function FeedingTracker() {
         )}
       </div>
 
-      {isRunning && timeLeft !== null && (
-        <p className="countdown">Time left: {formatTime(timeLeft)}</p>
-      )}
+      {isRunning && timeLeft !== null && <p className="countdown">Time left: {formatTime(timeLeft)}</p>}
     </div>
   );
 }
-
-export default FeedingTracker;

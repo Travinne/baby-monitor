@@ -1,18 +1,15 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from baby_backend.database import db
 from baby_backend.models import User, UserSettings
-from flask_jwt_extended import jwt_required, get_jwt_identity
 
 settings_bp = Blueprint("settings_bp", __name__, url_prefix="/settings")
 
-@settings_bp.route("/<int:user_id>", methods=["GET"])
+@settings_bp.route("/", methods=["GET"])
 @jwt_required()
-def get_settings(user_id):
-    current_user_id = get_jwt_identity()
-    if current_user_id != user_id:
-        return jsonify({"message": "Unauthorized"}), 403
-
+def get_current_user_settings():
+    user_id = get_jwt_identity()
     user = User.query.get(user_id)
     if not user:
         return jsonify({"message": "User not found"}), 404
@@ -31,13 +28,11 @@ def get_settings(user_id):
         "theme": settings.theme or "light"
     }), 200
 
-@settings_bp.route("/<int:user_id>", methods=["PUT"])
-@jwt_required()
-def update_settings(user_id):
-    current_user_id = get_jwt_identity()
-    if current_user_id != user_id:
-        return jsonify({"message": "Unauthorized"}), 403
 
+@settings_bp.route("/", methods=["PUT"])
+@jwt_required()
+def update_current_user_settings():
+    user_id = get_jwt_identity()
     data = request.get_json() or {}
 
     user = User.query.get(user_id)
@@ -49,26 +44,23 @@ def update_settings(user_id):
         settings = UserSettings(user_id=user_id)
         db.session.add(settings)
 
-    
-    if "username" in data:
-        if User.query.filter(User.username == data["username"], User.id != user_id).first():
+    username = data.get("username")
+    if username and username != user.username:
+        if User.query.filter(User.username == username, User.id != user_id).first():
             return jsonify({"message": "Username already taken"}), 409
-        user.username = data["username"]
+        user.username = username
 
-    if "email" in data:
-        if User.query.filter(User.email == data["email"], User.id != user_id).first():
-            return jsonify({"message": "Email already taken"}), 409
-        user.email = data["email"]
+    full_name = data.get("fullName")
+    if full_name is not None:
+        settings.full_name = full_name
 
-    if "fullName" in data:
-        settings.full_name = data["fullName"]
+    notifications = data.get("notifications")
+    if notifications is not None:
+        settings.notifications = notifications
 
-    if "notifications" in data:
-        settings.notifications = data["notifications"]
-
-    if "theme" in data:
-        settings.theme = data["theme"]
-
+    theme = data.get("theme")
+    if theme:
+        settings.theme = theme
 
     old_password = data.get("oldPassword")
     new_password = data.get("newPassword")

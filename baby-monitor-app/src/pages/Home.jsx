@@ -1,31 +1,59 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getFeedings } from "../api/feeding.js";
+import { getSleeps } from "../api/sleep.js";
+import { getGrowth } from "../api/growth.js";
 
-function Home() {
+export default function Home() {
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [baby, setBaby] = useState(null);
+  const [lastFeeding, setLastFeeding] = useState(null);
+  const [lastSleep, setLastSleep] = useState(null);
+  const [lastGrowth, setLastGrowth] = useState(null);
 
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+  // Clock
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const formattedDate = currentTime.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  // Fetch baby and activities if logged in
+  useEffect(() => {
+    const babyData = localStorage.getItem("baby");
+    if (babyData) setBaby(JSON.parse(babyData));
 
-  const formattedTime = currentTime.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+    if (!token) return;
 
-  const babyData = localStorage.getItem("baby");
-  const babyName = babyData ? JSON.parse(babyData).fullName : null;
+    const fetchActivities = async () => {
+      try {
+        const feedings = await getFeedings();
+        const sleeps = await getSleeps();
+        const growths = await getGrowth();
+
+        setLastFeeding(feedings?.sort((a, b) => new Date(b.time) - new Date(a.time))[0] || null);
+        setLastSleep(sleeps?.sort((a, b) => new Date(b.start_time) - new Date(a.start_time))[0] || null);
+        setLastGrowth(growths?.sort((a, b) => new Date(b.time) - new Date(a.time))[0] || null);
+      } catch (err) {
+        console.error("Failed to fetch last activities:", err);
+      }
+    };
+
+    fetchActivities();
+  }, [token]);
+
+  const formattedDate = currentTime.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  const formattedTime = currentTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+
+  const calculateAge = (dob) => {
+    if (!dob) return null;
+    const diff = new Date() - new Date(dob);
+    const months = Math.floor(diff / (1000 * 60 * 60 * 24 * 30));
+    const years = Math.floor(months / 12);
+    return years > 0 ? `${years} yr${years > 1 ? "s" : ""} ${months % 12} mo` : `${months} mo`;
+  };
 
   const features = [
     { icon: "🍼", title: "Feeding Tracker", desc: "Monitor feeding schedules and amounts" },
@@ -34,22 +62,23 @@ function Home() {
     { icon: "📊", title: "Growth Charts", desc: "Monitor weight and height progress" },
   ];
 
+  // **If user is not logged in, show marketing view**
+  // **If user is not logged in, show marketing view**
+if (!token) {
   return (
     <div className="home-container">
       <header className="home-header">
         <h1>Welcome to Baby Monitor</h1>
-        {babyName && (
-          <p className="baby-welcome">
-            Tracking {babyName}'s journey
-          </p>
-        )}
         <p className="home-subtitle">
-          Your all-in-one tool to track your baby's growth, feeding, sleeping, 
-          checkups, and more all in one place.
+          Track your baby's growth, feeding, sleeping, and health records all in one place.
         </p>
-        <div className="date-time-display">
-          <div className="date-display">{formattedDate}</div>
-          <div className="time-display">{formattedTime}</div>
+        <div className="cta-section" style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          <button className="btn btn-primary" onClick={() => navigate("/login")}>
+            Log In
+          </button>
+          <button className="btn btn-secondary" onClick={() => navigate("/register")}>
+            Register
+          </button>
         </div>
       </header>
 
@@ -64,17 +93,82 @@ function Home() {
             </div>
           ))}
         </div>
+      </main>
+
+      <footer className="home-footer">
+        <p>Baby Monitor App &copy; 2025</p>
+        <p className="footer-links">
+          <a href="/terms">Terms</a> | <a href="/privacy">Privacy</a> | <a href="/contact">Contact</a>
+        </p>
+      </footer>
+    </div>
+  );
+}
+
+  // **If logged in, show baby profile + last activities**
+  return (
+    <div className="home-container">
+      <header className="home-header">
+        <h1>Welcome to Baby Monitor</h1>
+        {baby && (
+          <div className="baby-profile">
+            <img src={baby.profileImage || "/default-baby.png"} alt={baby.fullName} className="baby-profile-img" />
+            <div>
+              <h2>{baby.fullName}</h2>
+              <p>Age: {calculateAge(baby.dob)}</p>
+            </div>
+          </div>
+        )}
+        <div className="date-time-display">
+          <div className="date-display">{formattedDate}</div>
+          <div className="time-display">{formattedTime}</div>
+        </div>
+      </header>
+
+      <main className="home-main">
+        <h2 className="section-title">Last Recorded Activities</h2>
+        <div className="activities-grid">
+          <div className="activity-card">
+            <h3>Last Feeding</h3>
+            {lastFeeding ? (
+              <p>
+                {lastFeeding.food_type} — {lastFeeding.amount} <br />
+                {new Date(lastFeeding.time).toLocaleString()}
+              </p>
+            ) : (
+              <p>No feeding recorded yet</p>
+            )}
+          </div>
+
+          <div className="activity-card">
+            <h3>Last Sleep</h3>
+            {lastSleep ? (
+              <p>
+                Start: {new Date(lastSleep.start_time).toLocaleString()} <br />
+                End: {new Date(lastSleep.end_time).toLocaleString()} <br />
+                Duration: {lastSleep.duration}
+              </p>
+            ) : (
+              <p>No sleep recorded yet</p>
+            )}
+          </div>
+
+          <div className="activity-card">
+            <h3>Last Growth</h3>
+            {lastGrowth ? (
+              <p>
+                Weight: {lastGrowth.weight} kg <br />
+                Height: {lastGrowth.height} cm <br />
+                {new Date(lastGrowth.time).toLocaleDateString()}
+              </p>
+            ) : (
+              <p>No growth recorded yet</p>
+            )}
+          </div>
+        </div>
 
         <div className="cta-section">
-          <h2>Ready to Get Started?</h2>
-          <p>
-            Head over to your Dashboard to start tracking and managing everything 
-            about your baby in one simple view.
-          </p>
-          <button
-            className="btn btn-primary"
-            onClick={() => navigate("/dashboard")}
-          >
+          <button className="btn btn-primary" onClick={() => navigate("/dashboard")}>
             Go to Dashboard
           </button>
         </div>
@@ -89,5 +183,3 @@ function Home() {
     </div>
   );
 }
-
-export default Home;

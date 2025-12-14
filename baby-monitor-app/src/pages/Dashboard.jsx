@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import TrackerMenu from "../components/TrackerMenu";
+import TrackerMenu from "./TrackerMenu";
 
 function Dashboard() {
   const [babyData, setBabyData] = useState(null);

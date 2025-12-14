@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import BackButton from "../components/BackButton";
-import API from "../api/api";
+import { getBabyProfile, addBabyProfile, updateBabyProfile } from "../api/babyProfile";
 
 function BabyProfile() {
   const [baby, setBaby] = useState({
@@ -19,17 +19,13 @@ function BabyProfile() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-
   const validateField = (name, value) => {
     const newErrors = { ...errors };
-    if (name === "fullName" && value.trim().length < 2) {
+    if (name === "fullName" && value.trim().length < 2)
       newErrors.fullName = "Name must be at least 2 characters";
-    } else if (name === "dob" && value && new Date(value) > new Date()) {
+    else if (name === "dob" && value && new Date(value) > new Date())
       newErrors.dob = "Date cannot be in the future";
-    } else {
-      delete newErrors[name];
-    }
+    else delete newErrors[name];
     setErrors(newErrors);
   };
 
@@ -43,32 +39,24 @@ function BabyProfile() {
     const file = e.target.files[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) return alert("Invalid image file");
-    setBaby({
-      ...baby,
-      photo: URL.createObjectURL(file),
-      photoFile: file,
-    });
+    setBaby({ ...baby, photo: URL.createObjectURL(file), photoFile: file });
   };
 
   const fetchBaby = async () => {
     setIsLoading(true);
     try {
-      const res = await API.get("/babyprofile/", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const data = res.data;
-      if (!data || !data.id) return;
+      const data = await getBabyProfile();
+      if (!data || Object.keys(data).length === 0) return;
 
       setBaby({
-        id: data.id,
+        id: data.id || null,
         fullName: data.fullName || "",
         dob: data.dob ? data.dob.split("T")[0] : "",
         gender: data.gender || "",
         weight: data.weight || "",
         height: data.height || "",
         notes: data.notes || "",
-        photo: data.photo ? `${API.defaults.baseURL}${data.photo}` : "",
+        photo: data.photo ? `${process.env.REACT_APP_API_URL}${data.photo}` : "",
         photoFile: null,
       });
     } catch (err) {
@@ -80,15 +68,10 @@ function BabyProfile() {
   };
 
   const handleSave = async () => {
-   
-    if (!baby.fullName || !baby.dob) {
+    if (!baby.fullName || !baby.dob)
       return alert("Full name and date of birth are required");
-    }
-
-    
-    if (Object.keys(errors).length > 0) {
+    if (Object.keys(errors).length > 0)
       return alert("Please fix the errors before saving");
-    }
 
     setIsSaving(true);
 
@@ -103,16 +86,11 @@ function BabyProfile() {
 
     try {
       if (baby.id) {
-        await API.put(`/babyprofile/${baby.id}/`, formData, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await updateBabyProfile(baby.id, formData);
       } else {
-        const res = await API.post("/babyprofile/", formData, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setBaby((prev) => ({ ...prev, id: res.data.id }));
+        const data = await addBabyProfile(formData);
+        setBaby((prev) => ({ ...prev, id: data.id }));
       }
-
       alert("Profile saved successfully!");
       fetchBaby();
     } catch (err) {
@@ -125,7 +103,6 @@ function BabyProfile() {
 
   useEffect(() => {
     fetchBaby();
-    
   }, []);
 
   if (isLoading) return <p className="loading">Loading...</p>;
@@ -166,59 +143,28 @@ function BabyProfile() {
 
       <form className="form" onSubmit={(e) => e.preventDefault()}>
         <label>Full Name</label>
-        <input
-          className="input"
-          name="fullName"
-          value={baby.fullName}
-          onChange={handleChange}
-        />
+        <input className="input" name="fullName" value={baby.fullName} onChange={handleChange} />
         {errors.fullName && <p className="error-message">{errors.fullName}</p>}
 
         <label>Date of Birth</label>
-        <input
-          type="date"
-          className="input"
-          name="dob"
-          value={baby.dob}
-          onChange={handleChange}
-        />
+        <input type="date" className="input" name="dob" value={baby.dob} onChange={handleChange} />
         {errors.dob && <p className="error-message">{errors.dob}</p>}
 
         <label>Gender</label>
-        <select
-          className="input"
-          name="gender"
-          value={baby.gender}
-          onChange={handleChange}
-        >
+        <select className="input" name="gender" value={baby.gender} onChange={handleChange}>
           <option value="">Select</option>
           <option value="Male">Boy</option>
           <option value="Female">Girl</option>
         </select>
 
         <label>Weight (kg)</label>
-        <input
-          className="input"
-          name="weight"
-          value={baby.weight}
-          onChange={handleChange}
-        />
+        <input className="input" name="weight" value={baby.weight} onChange={handleChange} />
 
         <label>Height (cm)</label>
-        <input
-          className="input"
-          name="height"
-          value={baby.height}
-          onChange={handleChange}
-        />
+        <input className="input" name="height" value={baby.height} onChange={handleChange} />
 
         <label>Notes</label>
-        <textarea
-          className="input"
-          name="notes"
-          value={baby.notes}
-          onChange={handleChange}
-        />
+        <textarea className="input" name="notes" value={baby.notes} onChange={handleChange} />
       </form>
 
       <button className="btn btn-secondary" onClick={handleSave}>

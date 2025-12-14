@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
-import API from "../api/api";
+import { useNavigate } from "react-router-dom";
+import { getSettings, updateSettings } from "../api/settings.js";
 
-function Settings() {
+export default function Settings() {
+  const navigate = useNavigate();
   const [settings, setSettings] = useState({
     username: "",
     fullName: "",
@@ -10,29 +12,25 @@ function Settings() {
     theme: localStorage.getItem("theme") || "light",
     oldPassword: "",
     newPassword: "",
+    rememberMe: true,
   });
   const [isModified, setIsModified] = useState(false);
-  const [userId, setUserId] = useState(null);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const storedUser = JSON.parse(localStorage.getItem("user"));
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const storedUser = JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user"));
 
     if (!token || !storedUser) {
-      window.location.href = "/login";
+      navigate("/login");
       return;
     }
 
-    const id = storedUser.id;
-    setUserId(id);
+    setUserId(storedUser.id);
 
-    // Fetch settings only after userId is set
-    API.get(`/settings/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        const data = res.data;
+    getSettings(storedUser.id)
+      .then((data) => {
         setSettings((prev) => ({
           ...prev,
           username: data.username,
@@ -43,7 +41,7 @@ function Settings() {
         }));
       })
       .catch(() => alert("Failed to load user settings"));
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     document.body.className = settings.theme === "dark" ? "dark-theme" : "light-theme";
@@ -52,10 +50,7 @@ function Settings() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setSettings((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    setSettings((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
     setIsModified(true);
   };
 
@@ -66,8 +61,7 @@ function Settings() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem("token");
-    if (!token) return alert("Please log in first");
+    if (!userId) return alert("User not found");
 
     try {
       const payload = { ...settings };
@@ -76,20 +70,23 @@ function Settings() {
         delete payload.newPassword;
       }
 
-      const response = await API.put(`/settings/${userId}`, payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const updated = await updateSettings(userId, payload);
 
       alert("Settings updated successfully!");
       setIsModified(false);
       setSettings((prev) => ({ ...prev, oldPassword: "", newPassword: "" }));
 
       const updatedUser = {
-        ...JSON.parse(localStorage.getItem("user")),
-        username: response.data.settings.username,
-        email: response.data.settings.email,
+        ...JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user")),
+        username: updated.username,
+        email: updated.email,
       };
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      if (settings.rememberMe) {
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+      } else {
+        sessionStorage.setItem("user", JSON.stringify(updatedUser));
+      }
     } catch (err) {
       alert(err.response?.data?.message || "Failed to update settings");
     }
@@ -99,16 +96,15 @@ function Settings() {
     const confirmation = window.prompt("Type DELETE to confirm account deletion:");
     if (confirmation !== "DELETE") return;
 
-    const token = localStorage.getItem("token");
-    if (!token) return alert("Please log in first");
-
     try {
-      await API.delete(`/users/delete/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      await fetch(`${process.env.REACT_APP_API_URL}/users/delete/${userId}`, {
+        method: "DELETE",
+        credentials: "include",
       });
       alert("Account deleted successfully");
       localStorage.clear();
-      window.location.href = "/";
+      sessionStorage.clear();
+      navigate("/");
     } catch {
       alert("Failed to delete account");
     }
@@ -116,8 +112,11 @@ function Settings() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
     alert("Logged out successfully!");
-    window.location.href = "/login";
+    navigate("/login");
   };
 
   return (
@@ -197,5 +196,3 @@ function Settings() {
     </div>
   );
 }
-
-export default Settings;

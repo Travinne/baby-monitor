@@ -1,26 +1,24 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../api/api";
+import { loginUser } from "../api/auth";
 
-function Login() {
+export default function Login() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: "",
     password: "",
-    rememberMe: false,  
+    rememberMe: false,
   });
   const [errors, setErrors] = useState({});
   const [errorMsg, setErrorMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  
   useEffect(() => {
     const token =
       localStorage.getItem("token") || sessionStorage.getItem("token");
     if (token) navigate("/dashboard");
   }, [navigate]);
 
- 
   const validateField = (name, value) => {
     const newErrors = { ...errors };
     switch (name) {
@@ -40,7 +38,6 @@ function Login() {
     setErrors(newErrors);
   };
 
- 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     const newValue = type === "checkbox" ? checked : value;
@@ -49,13 +46,12 @@ function Login() {
     if (type !== "checkbox") validateField(name, value);
   };
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMsg("");
 
- 
+    // validate before submit
     validateField("username", formData.username);
     validateField("password", formData.password);
 
@@ -65,14 +61,13 @@ function Login() {
     }
 
     try {
-      const res = await API.post("/login", {
+      const res = await loginUser({
         username: formData.username,
         password: formData.password,
       });
 
-      const { token, user } = res.data;
+      const { token, user } = res;
 
-     
       if (formData.rememberMe) {
         localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(user));
@@ -83,9 +78,8 @@ function Login() {
 
       navigate("/dashboard");
     } catch (err) {
-      setErrorMsg(
-        err.response?.data?.message || "Invalid login credentials"
-      );
+      console.error(err);
+      setErrorMsg(err.response?.data?.message || "Invalid login credentials");
     } finally {
       setIsSubmitting(false);
     }
@@ -101,70 +95,47 @@ function Login() {
       <form onSubmit={handleSubmit} className="login-form">
         {errorMsg && <p className="error-message">{errorMsg}</p>}
 
-        <div className="form-group">
-          <label htmlFor="username">Username</label>
+        <input
+          type="text"
+          name="username"
+          placeholder="Username"
+          value={formData.username}
+          onChange={handleChange}
+          required
+        />
+        {errors.username && <p className="error-message">{errors.username}</p>}
+
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={formData.password}
+          onChange={handleChange}
+          required
+        />
+        {errors.password && <p className="error-message">{errors.password}</p>}
+
+        <label className="checkbox-label">
           <input
-            id="username"
-            type="text"
-            name="username"
-            placeholder="Enter your username"
-            value={formData.username}
+            type="checkbox"
+            name="rememberMe"
+            checked={formData.rememberMe}
             onChange={handleChange}
-            className="input"
-            required
           />
-          {errors.username && (
-            <span className="error-message">{errors.username}</span>
-          )}
-        </div>
+          Remember me
+        </label>
 
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            name="password"
-            placeholder="Enter your password"
-            value={formData.password}
-            onChange={handleChange}
-            className="input"
-            required
-          />
-          {errors.password && (
-            <span className="error-message">{errors.password}</span>
-          )}
-        </div>
-
-        <div className="form-group checkbox-group">
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              name="rememberMe"
-              className="checkbox-input"
-              checked={formData.rememberMe}
-              onChange={handleChange}
-            />
-            <span className="checkbox-text">Remember me</span>
-          </label>
-        </div>
-
-        <button type="submit" className="btn login-btn" disabled={isSubmitting}>
+        <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Signing in..." : "Login"}
         </button>
       </form>
 
       <p className="register-link">
         Don’t have an account?{" "}
-        <button
-          type="button"
-          onClick={() => navigate("/register")}
-          className="link-btn"
-        >
+        <button type="button" onClick={() => navigate("/register")}>
           Register here
         </button>
       </p>
     </div>
   );
 }
-
-export default Login;

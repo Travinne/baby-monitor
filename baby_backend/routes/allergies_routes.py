@@ -1,13 +1,20 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from baby_backend.database import db
-from baby_backend.models import Allergy
-from datetime import datetime
+from baby_backend.models import Allergy, BabyProfile
 
 allergies_bp = Blueprint('allergies_bp', __name__)
 
-@allergies_bp.route('/', methods=['GET'])
-def get_allergies():
-    allergies = Allergy.query.all()
+# Get all allergies for a specific baby
+@allergies_bp.route('/<int:baby_id>', methods=['GET'])
+@jwt_required()
+def get_allergies(baby_id):
+    user_id = get_jwt_identity()
+    baby = BabyProfile.query.filter_by(id=baby_id, user_id=user_id).first()
+    if not baby:
+        return jsonify({"message": "Baby not found"}), 404
+
+    allergies = Allergy.query.filter_by(baby_id=baby_id).all()
     return jsonify([
         {
             'id': a.id,
@@ -21,11 +28,19 @@ def get_allergies():
     ]), 200
 
 
-@allergies_bp.route('/', methods=['POST'])
-def add_allergy():
+# Add a new allergy for a baby
+@allergies_bp.route('/<int:baby_id>', methods=['POST'])
+@jwt_required()
+def add_allergy(baby_id):
+    user_id = get_jwt_identity()
+    baby = BabyProfile.query.filter_by(id=baby_id, user_id=user_id).first()
+    if not baby:
+        return jsonify({"message": "Baby not found"}), 404
+
     data = request.get_json()
 
     new_allergy = Allergy(
+        baby_id=baby_id,
         name=data.get('name'),
         severity=data.get('severity'),
         reaction=data.get('reaction', 'Not specified'),
@@ -47,11 +62,19 @@ def add_allergy():
     }), 201
 
 
+# Update an allergy
 @allergies_bp.route('/<int:id>', methods=['PUT'])
+@jwt_required()
 def update_allergy(id):
+    user_id = get_jwt_identity()
     allergy = Allergy.query.get_or_404(id)
-    data = request.get_json()
 
+    # Ensure allergy belongs to user's baby
+    baby = BabyProfile.query.filter_by(id=allergy.baby_id, user_id=user_id).first()
+    if not baby:
+        return jsonify({"message": "Unauthorized"}), 403
+
+    data = request.get_json()
     allergy.name = data.get('name', allergy.name)
     allergy.severity = data.get('severity', allergy.severity)
     allergy.reaction = data.get('reaction', allergy.reaction)
@@ -62,9 +85,18 @@ def update_allergy(id):
     return jsonify({"message": "Allergy updated successfully"}), 200
 
 
+# Delete an allergy
 @allergies_bp.route('/<int:id>', methods=['DELETE'])
+@jwt_required()
 def delete_allergy(id):
+    user_id = get_jwt_identity()
     allergy = Allergy.query.get_or_404(id)
+
+    # Ensure allergy belongs to user's baby
+    baby = BabyProfile.query.filter_by(id=allergy.baby_id, user_id=user_id).first()
+    if not baby:
+        return jsonify({"message": "Unauthorized"}), 403
+
     db.session.delete(allergy)
     db.session.commit()
     return jsonify({"message": "Allergy deleted successfully"}), 200
