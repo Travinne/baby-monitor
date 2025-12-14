@@ -4,19 +4,19 @@ from flask_jwt_extended import JWTManager, verify_jwt_in_request
 from flask_migrate import Migrate
 import os
 
-from .database import db
-from .routes.auth_routes import auth_bp
-from .routes.allergies_routes import allergies_bp
-from .routes.bath_routes import bath_bp
-from .routes.checkup_routes import checkup_bp
-from .routes.diaper_routes import diaper_bp
-from .routes.feed_routes import feed_bp
-from .routes.sleep_routes import sleep_bp
-from .routes.growth_routes import growth_bp
-from .routes.babyprofile_routes import babyprofile_bp
-from .routes.settings_routes import settings_bp
-from .routes.notification_routes import notification_bp
-from .routes.dashboard_routes import dashboard_bp
+from database import db
+from routes.auth_routes import auth_bp
+from routes.allergies_routes import allergies_bp
+from routes.bath_routes import bath_bp
+from routes.checkup_routes import checkup_bp
+from routes.diaper_routes import diaper_bp
+from routes.feed_routes import feed_bp
+from routes.sleep_routes import sleep_bp
+from routes.growth_routes import growth_bp
+from routes.babyprofile_routes import babyprofile_bp
+from routes.settings_routes import settings_bp
+from routes.notification_routes import notification_bp
+from routes.dashboard_routes import dashboard_bp
 
 app = Flask(__name__)
 
