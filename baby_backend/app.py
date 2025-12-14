@@ -22,7 +22,7 @@ app = Flask(__name__)
 
 CORS(
     app,
-    origins=["https://baby-monitor-app.vercel.app"],
+    origins=["https://baby-monitor-mf1e.vercel.app"],
     supports_credentials=True,
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
