@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import BackButton from "./BackButton";
-import { getDiapers, addDiaper, deleteDiaper } from "../api/diapers";
+import BackButton from "../components/BackButton";
+import { getDiapers, addDiaper, deleteDiaper } from "../api/diapers.js";
 
 function DiaperTracker() {
   const [entries, setEntries] = useState([]);

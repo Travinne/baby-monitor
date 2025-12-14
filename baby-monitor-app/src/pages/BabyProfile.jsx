@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import BackButton from "../components/BackButton";
-import { getBabyProfile, addBabyProfile, updateBabyProfile } from "../api/babyProfile";
+import { getBabyProfile, addBabyProfile, updateBabyProfile } from "../api/babyprofile.js";
 
 function BabyProfile() {
   const [baby, setBaby] = useState({

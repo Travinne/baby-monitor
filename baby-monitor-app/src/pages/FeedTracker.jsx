@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import BackButton from "./BackButton";
-import { getFeedings, addFeeding, deleteFeeding } from "../api/feeding";
+import BackButton from "../components/BackButton";
+import { getFeedings, addFeeding, deleteFeeding } from "../api/feeding.js";
 
 export default function FeedingTracker() {
   const [feedings, setFeedings] = useState([]);

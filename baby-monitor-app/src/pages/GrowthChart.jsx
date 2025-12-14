@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import BackButton from "./BackButton";
-import { getGrowth, addGrowth, deleteGrowth } from "../api/growth";
+import BackButton from "../components/BackButton";
+import { getGrowth, addGrowth, deleteGrowth } from "../api/growth.js";
 
 export default function GrowthTracker() {
   const [entries, setEntries] = useState([]);

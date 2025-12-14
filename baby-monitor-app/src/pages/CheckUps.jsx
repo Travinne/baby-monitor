@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import BackButton from "./BackButton";
-import { getCheckups, addCheckup, deleteCheckup } from "../api/checkups";
+import BackButton from "../components/BackButton";
+import { getCheckups, addCheckup, deleteCheckup } from "../api/checkups.js";
 
 function Checkups() {
   const [checkups, setCheckups] = useState([]);
@@ -149,4 +149,24 @@ function Checkups() {
         {!shortRunning ? (
           <button onClick={handleStartShortTimer} className="btn">Start Short Timer</button>
         ) : (
-          <button onClick={() => { setShortRunning(false); setShortTimeLeft(null); setShortDays(""); setShortHours(""); }} className="btn remove-btn">
+          <button onClick={() => { setShortRunning(false); setShortTimeLeft(null); setShortDays(""); setShortHours(""); }} className="btn remove-btn">Reset</button>
+        )}
+      </div>
+      {shortRunning && shortTimeLeft !== null && <p className="countdown">Short-Term: {formatTime(shortTimeLeft)}</p>}
+
+      <h3 className="history-title">Long-Term Reminder (Months/Years)</h3>
+      <div className="timer">
+        <input type="number" min="0" placeholder="Months" value={longMonths} onChange={e => setLongMonths(e.target.value)} className="input" disabled={longRunning} />
+        <input type="number" min="0" placeholder="Years" value={longYears} onChange={e => setLongYears(e.target.value)} className="input" disabled={longRunning} />
+        {!longRunning ? (
+          <button onClick={handleStartLongTimer} className="btn">Start Long Timer</button>
+        ) : (
+          <button onClick={() => { setLongRunning(false); setLongTimeLeft(null); setLongMonths(""); setLongYears(""); }} className="btn remove-btn">Reset</button>
+        )}
+      </div>
+      {longRunning && longTimeLeft !== null && <p className="countdown">Long-Term: {formatTime(longTimeLeft)}</p>}
+    </div>
+  );
+}
+
+export default Checkups;

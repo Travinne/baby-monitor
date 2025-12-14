@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import BackButton from "../components/BackButton";
-import { getAllergies, addAllergy, deleteAllergy } from "../api/allergies";
+import { getAllergies, addAllergy, deleteAllergy } from "../api/allergies.js";
 
 export default function Allergies() {
   const [allergies, setAllergies] = useState([]);

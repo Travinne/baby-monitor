@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import BackButton from "./BackButton";
-import { getBaths, addBath, deleteBath } from "../api/baths";
+import BackButton from "../components/BackButton";
+import { getBaths, addBath, deleteBath } from "../api/baths.js";
 
 function BathTimeTracker() {
   const [entries, setEntries] = useState([]);
