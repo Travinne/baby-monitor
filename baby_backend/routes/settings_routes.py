@@ -49,7 +49,7 @@ def update_settings(user_id):
         settings = UserSettings(user_id=user_id)
         db.session.add(settings)
 
-    # Update username/email
+    
     if "username" in data:
         if User.query.filter(User.username == data["username"], User.id != user_id).first():
             return jsonify({"message": "Username already taken"}), 409
@@ -69,7 +69,7 @@ def update_settings(user_id):
     if "theme" in data:
         settings.theme = data["theme"]
 
-    # Handle password change
+
     old_password = data.get("oldPassword")
     new_password = data.get("newPassword")
     if old_password and new_password:

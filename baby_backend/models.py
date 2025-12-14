@@ -65,7 +65,7 @@ class UserSettings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     full_name = db.Column(db.String(100))
-    email = db.Column(db.String(120))
+
     theme = db.Column(db.String(20), default='light')
     notifications = db.Column(db.Boolean, default=True)
 
