@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import get_jwt_identity
-from database import db
-from models import Growth, BabyProfile
+from baby_backend.database import db
+from baby_backend.models import Growth, BabyProfile
 
 growth_bp = Blueprint('growth_bp', __name__)
 

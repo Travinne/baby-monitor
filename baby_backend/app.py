@@ -4,7 +4,7 @@ from flask_jwt_extended import JWTManager, verify_jwt_in_request
 from flask_migrate import Migrate
 import os
 
-from database import db
+from baby_backend.database import db
 from routes.auth_routes import auth_bp
 from routes.allergies_routes import allergies_bp
 from routes.bath_routes import bath_bp
