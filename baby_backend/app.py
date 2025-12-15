@@ -51,7 +51,7 @@ db.init_app(app)
 Migrate(app, db)
 
 with app.app_context():
-    from baby_backend import models
+    import models
     db.create_all()
 
 # Public routes that don't require JWT
