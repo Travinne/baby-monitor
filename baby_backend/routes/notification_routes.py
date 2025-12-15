@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import get_jwt_identity
-from baby_backend.database import db
-from baby_backend.models import Notification, BabyProfile
+from database import db
+from models import Notification, BabyProfile
 from datetime import datetime
 
 notification_bp = Blueprint('notification_bp', __name__)

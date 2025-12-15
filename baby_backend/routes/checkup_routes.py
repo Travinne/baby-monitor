@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from baby_backend.database import db
-from baby_backend.models import Checkup, BabyProfile
+from database import db
+from models import Checkup, BabyProfile
 from datetime import datetime
 
 checkup_bp = Blueprint('checkup_bp', __name__)

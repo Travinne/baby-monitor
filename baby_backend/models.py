@@ -1,4 +1,4 @@
-from baby_backend.database import db
+from database import db
 from datetime import datetime
 from enum import Enum
 

@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app
-from baby_backend.database import db
-from baby_backend.models import BabyProfile
+from database import db
+from models import BabyProfile
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import os
 from werkzeug.utils import secure_filename
