@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = process.env.REACT_APP_API_URL || "https://baby-monitor-1.onrender.com/api/allergies";
+const BASE_URL = process.env.REACT_APP_API_URL || "https://baby-monitor-3vgm.onrender.com/api/allergies";
 
 const getToken = () => localStorage.getItem("token") || sessionStorage.getItem("token");
 
