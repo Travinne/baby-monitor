@@ -26,7 +26,7 @@ CORS(
     resources={r"/api/*": {
         "origins": [
             "http://localhost:5173",
-            r"https://.*\.vercel\.app"
+            "https://baby-monitor-mf1e-q987tzyt6-travinnes-projects.vercel.app"
         ]
     }},
     supports_credentials=True
