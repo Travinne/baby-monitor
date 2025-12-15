@@ -4,6 +4,7 @@ import { registerUser } from "../api/auth.js";
 
 export default function Register() {
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -11,6 +12,7 @@ export default function Register() {
     confirmPassword: "",
     rememberMe: false,
   });
+
   const [errors, setErrors] = useState({});
   const [errorMsg, setErrorMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,6 +48,7 @@ export default function Register() {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     const newValue = type === "checkbox" ? checked : value;
+
     setFormData({ ...formData, [name]: newValue });
     setErrors({ ...errors, [name]: validateField(name, newValue) });
   };
@@ -73,6 +76,7 @@ export default function Register() {
         username: formData.username,
         email: formData.email,
         password: formData.password,
+        confirmPassword: formData.confirmPassword,
       });
 
       const { token, user } = res;
@@ -88,7 +92,9 @@ export default function Register() {
       navigate("/dashboard");
     } catch (err) {
       console.error(err);
-      setErrorMsg(err.response?.data?.message || "Registration failed. Try again.");
+      setErrorMsg(
+        err.response?.data?.message || "Registration failed. Try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -109,7 +115,9 @@ export default function Register() {
           onChange={handleChange}
           required
         />
-        {errors.username && <p className="error-message">{errors.username}</p>}
+        {errors.username && (
+          <p className="error-message">{errors.username}</p>
+        )}
 
         <input
           type="email"
@@ -119,7 +127,9 @@ export default function Register() {
           onChange={handleChange}
           required
         />
-        {errors.email && <p className="error-message">{errors.email}</p>}
+        {errors.email && (
+          <p className="error-message">{errors.email}</p>
+        )}
 
         <input
           type="password"
@@ -129,7 +139,9 @@ export default function Register() {
           onChange={handleChange}
           required
         />
-        {errors.password && <p className="error-message">{errors.password}</p>}
+        {errors.password && (
+          <p className="error-message">{errors.password}</p>
+        )}
 
         <input
           type="password"
@@ -139,7 +151,9 @@ export default function Register() {
           onChange={handleChange}
           required
         />
-        {errors.confirmPassword && <p className="error-message">{errors.confirmPassword}</p>}
+        {errors.confirmPassword && (
+          <p className="error-message">{errors.confirmPassword}</p>
+        )}
 
         <label className="checkbox-label">
           <input
