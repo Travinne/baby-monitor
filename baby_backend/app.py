@@ -20,18 +20,16 @@ from routes.dashboard_routes import dashboard_bp
 
 app = Flask(__name__)
 
-# CORS setup: allow multiple origins
+
 CORS(
     app,
-    origins=[
-        "https://baby-monitor-mf1e.vercel.app",
-        "https://baby-monitor-app.vercel.app",
-        "http://localhost:5173"  # local dev
-    ],
-    supports_credentials=True,
-    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"],
-    expose_headers=["Content-Type", "Authorization"]
+    resources={r"/api/*": {
+        "origins": [
+            "http://localhost:5173",
+            "https://*.vercel.app"
+        ]
+    }},
+    supports_credentials=True
 )
 
 # Flask config
@@ -54,31 +52,31 @@ with app.app_context():
     import models
     db.create_all()
 
-# Public routes that don't require JWT
+
 PUBLIC_ROUTES = ["/api/login", "/api/register"]
 
 @app.before_request
 def protect_routes():
-    # Always allow preflight OPTIONS requests
+
     if request.method == "OPTIONS":
-        return {}, 200
-    # Allow public routes
+        return
+
     for route in PUBLIC_ROUTES:
         if request.path.startswith(route):
             return
-    # Require JWT for all other /api routes
+
     if request.path.startswith("/api"):
         try:
             verify_jwt_in_request()
         except:
             return jsonify({"message": "Login Required"}), 401
 
-# Static files (uploaded baby photos)
+
 @app.route("/static/uploads/baby_photos/<path:filename>")
 def get_uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
-# Register Blueprints
+
 app.register_blueprint(auth_bp, url_prefix="/api")
 app.register_blueprint(allergies_bp, url_prefix="/api/allergies")
 app.register_blueprint(bath_bp, url_prefix="/api/baths")
