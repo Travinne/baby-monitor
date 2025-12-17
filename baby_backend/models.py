@@ -62,7 +62,7 @@ class BabyProfile(db.Model):
     name = db.Column(db.String(100), nullable=False)
     birth_date = db.Column(db.Date)
     age_in_months = db.Column(db.Integer)
-    gender = db.Column(db.Enum(GenderEnum))
+    gender = db.Column(db.String(10))
     notes = db.Column(db.Text)
     photo_url = db.Column(db.String(300))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -99,7 +99,7 @@ class Checkup(db.Model):
 class Diaper(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     baby_id = db.Column(db.Integer, db.ForeignKey('baby_profile.id'), nullable=False)
-    mess_type = db.Column(db.Enum(DiaperTypeEnum))
+    mess_type = db.Column(db.String(20))
     notes = db.Column(db.Text)
     time = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -107,7 +107,7 @@ class Diaper(db.Model):
 class Feeding(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     baby_id = db.Column(db.Integer, db.ForeignKey('baby_profile.id'), nullable=False)
-    feed_type = db.Column(db.Enum(FeedTypeEnum))
+    feed_type = db.Column(db.String(20))
     amount = db.Column(db.String(50))
     notes = db.Column(db.Text)
     time = db.Column(db.DateTime, default=datetime.utcnow)
@@ -137,7 +137,7 @@ class Notification(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     title = db.Column(db.String(100))
     message = db.Column(db.Text)
-    notification_type = db.Column(db.Enum(NotificationTypeEnum), default=NotificationTypeEnum.GENERAL)
+    notification_type = db.Column(db.String(20), default="General")
     is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
