@@ -1,2 +1,2 @@
 
-web: gunicorn baby_backend.app:app
+web: FLASK_APP=baby_backend.app flask db upgrade && gunicorn baby_backend.app:app
