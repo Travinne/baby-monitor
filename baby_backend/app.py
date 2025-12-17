@@ -34,6 +34,7 @@ def create_app():
 
     # Extensions
     db.init_app(app)
+    db.create_all()
     jwt = JWTManager(app)
     Migrate(app, db)
 
