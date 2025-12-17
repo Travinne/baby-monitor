@@ -10,47 +10,51 @@ auth_bp = Blueprint("auth_bp", __name__)
 
 @auth_bp.route("/register", methods=["POST"])
 def register():
-    data = request.get_json() or {}
+    try:
+        data = request.get_json() or {}
 
-    username = data.get("username")
-    email = data.get("email")
-    password = data.get("password")
-    confirm_password = data.get("confirmPassword")
+        username = data.get("username")
+        email = data.get("email")
+        password = data.get("password")
+        confirm_password = data.get("confirmPassword")
 
-    if not all([username, email, password, confirm_password]):
-        return jsonify({"message": "All fields are required"}), 400
+        if not all([username, email, password, confirm_password]):
+            return jsonify({"message": "All fields are required"}), 400
 
-    if password != confirm_password:
-        return jsonify({"message": "Passwords do not match"}), 400
+        if password != confirm_password:
+            return jsonify({"message": "Passwords do not match"}), 400
 
-    if User.query.filter_by(username=username).first():
-        return jsonify({"message": "Username already exists"}), 409
+        if User.query.filter_by(username=username).first():
+            return jsonify({"message": "Username already exists"}), 409
 
-    if User.query.filter_by(email=email).first():
-        return jsonify({"message": "Email already exists"}), 409
+        if User.query.filter_by(email=email).first():
+            return jsonify({"message": "Email already exists"}), 409
 
-    user = User(
-        username=username,
-        email=email,
-        password=generate_password_hash(password)
-    )
-    db.session.add(user)
-    db.session.commit()
+        user = User(
+            username=username,
+            email=email,
+            password=generate_password_hash(password)
+        )
+        db.session.add(user)
+        db.session.commit()
 
-    access_token = create_access_token(
-        identity=user.id,
-        expires_delta=datetime.timedelta(hours=24)
-    )
+        access_token = create_access_token(
+            identity=user.id,
+            expires_delta=datetime.timedelta(hours=24)
+        )
 
-    return jsonify({
-        "message": "Registration successful",
-        "token": access_token,
-        "user": {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email
-        }
-    }), 201
+        return jsonify({
+            "message": "Registration successful",
+            "token": access_token,
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email
+            }
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": str(e)}), 500
 
 
 # ======================
