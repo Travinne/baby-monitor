@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from database import db
-from models import Allergy, BabyProfile
+from ..database import db
+from ..models import Allergy, BabyProfile
 
 allergies_bp = Blueprint('allergies_bp', __name__)
 

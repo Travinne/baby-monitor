@@ -1,4 +1,4 @@
-from database import db
+from .database import db
 from datetime import datetime
 from enum import Enum
 
@@ -44,8 +44,7 @@ class User(db.Model):
     notifications = db.relationship(
         'Notification', backref='user', lazy=True, cascade="all, delete-orphan"
     )
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    confirmPassowrd = db.Column(db.String(200), nullable=False)
 
 
 class UserSettings(db.Model):
