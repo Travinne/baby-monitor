@@ -1,7 +1,6 @@
 from flask import Flask, send_from_directory, jsonify, request
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, verify_jwt_in_request
-from flask_migrate import Migrate
 import os
 
 from .database import db
@@ -36,8 +35,7 @@ def create_app():
     db.init_app(app)
     with app.app_context():
         db.create_all()
-    jwt = JWTManager(app)
-    Migrate(app, db)
+        jwt = JWTManager(app)
 
     # CORS
     CORS(
