@@ -1,2 +1,2 @@
 
-web: gunicorn baby_backend.app:app
+web: cd baby_backend && gunicorn app:app
