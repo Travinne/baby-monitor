@@ -1,12 +1,49 @@
-# React + Vite
+# Baby Monitor Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack baby monitoring application with real-time tracking of feeding, sleeping, diaper changes, and more.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 👶 **Baby Profile Management** - Store and update baby information
+- 🍼 **Feeding Tracker** - Log breast, formula, and solid feedings
+- 😴 **Sleep Tracker** - Monitor sleep patterns and duration
+- 🧷 **Diaper Tracker** - Track diaper changes and types
+- 🛁 **Bath Time Log** - Record bath times and notes
+- 📊 **Growth Chart** - Track height, weight, and milestones
+- 🏥 **Checkups** - Schedule and log doctor appointments
+- ⚠️ **Allergies** - Track allergies and medications
+- 🔔 **Notifications** - Get reminders for feedings, medications, etc.
+- 📱 **Responsive Design** - Works on mobile, tablet, and desktop
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Frontend
+- React 18 with Hooks
+- React Router DOM for navigation
+- CSS3 with custom responsive design
+- Fetch API for HTTP requests
+- Context API for state management
+
+### Backend
+- Node.js with Express
+- MongoDB (or your database)
+- JWT Authentication
+- RESTful API
+
+## Setup Instructions
+
+### 1. Frontend Setup
+
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd baby-monitor-app
+
+# Install dependencies
+npm install
+
+# Create environment file
+cp .env.example .env
+
+# Start development server
+npm start

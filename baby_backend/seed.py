@@ -1,5 +1,5 @@
 from app import app
-from database import db
+from baby_backend.database import db
 from models import Allergy, Bath, Checkup, Diaper
 
 with app.app_context():

@@ -1,167 +1,112 @@
-import React from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  useLocation,
-  Navigate,
-} from "react-router-dom";
+import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { verifyToken } from './api/auth';
+import { ApiProvider } from './context/ApiContext';
+import ProtectedRoutes from './pages/ProtectedRoutes';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+import BabyProfile from './pages/BabyProfile';
+import FeedTracker from './pages/FeedTracker';
+import DiaperTracker from './pages/DiaperTracker';
+import SleepTracker from './pages/SleepTracker';
+import BathTime from './pages/BathTime';
+import CheckUps from './pages/CheckUps';
+import GrowthChart from './pages/GrowthChart';
+import Allergies from './pages/Allergies';
+import Settings from './pages/Settings';
+import TrackerMenu from './pages/TrackerMenu';
+import './App.css';
 
-import Home from "./pages/Home";
-import Dashboard from "./pages/Dashboard";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import BabyProfile from "./pages/BabyProfile";
-import Settings from "./pages/Settings";
-import FeedTracker from "./pages/FeedTracker";
-import SleepTracker from "./pages/SleepTracker";
-import DiaperTracker from "./pages/DiaperTracker";
-import GrowthChart from "./pages/GrowthChart";
-import CheckUps from "./pages/CheckUps";
-import Allergies from "./pages/Allergies";
-import BathTimeTracker from "./pages/BathTime";
+function AppContent() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-import Navbar from "./components/NavBar";
+  useEffect(() => {
+    checkAuth();
+  }, []);
 
-// Protected route: only for logged-in users
-const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-  return token ? children : <Navigate to="/login" replace />;
-};
+  const checkAuth = async () => {
+    try {
+      const token = localStorage.getItem('babyMonitorToken');
+      if (token) {
+        const verification = await verifyToken();
+        setIsAuthenticated(verification.valid);
+        
+        if (!verification.valid) {
+          localStorage.removeItem('babyMonitorToken');
+          localStorage.removeItem('babyMonitorUser');
+        }
+      }
+    } catch (error) {
+      console.error('Auth check error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-// Guest route: only for non-logged-in users
-const GuestRoute = ({ children }) => {
-  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-  return token ? <Navigate to="/home" replace /> : children;
-};
+  const handleLogin = (token, userData) => {
+    localStorage.setItem('babyMonitorToken', token);
+    localStorage.setItem('babyMonitorUser', JSON.stringify(userData));
+    setIsAuthenticated(true);
+  };
 
-// Wrapper to conditionally show Navbar
-function AppWrapper() {
-  const location = useLocation();
-  const noNavbarPages = ["/login", "/register"];
-  const hideNavbar = noNavbarPages.includes(location.pathname);
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('babyMonitorToken');
+      localStorage.removeItem('babyMonitorUser');
+      setIsAuthenticated(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="loading-screen">
+        <div className="spinner"></div>
+        <p>Loading Baby Monitor...</p>
+      </div>
+    );
+  }
 
   return (
-    <>
-      {!hideNavbar && <Navbar />}
+    <Router>
       <div className="app">
         <Routes>
-          {/* Public Home page */}
-          <Route path="/" element={<Home />} />
-
-          {/* Guest-only pages */}
-          <Route
-            path="/login"
-            element={
-              <GuestRoute>
-                <Login />
-              </GuestRoute>
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              <GuestRoute>
-                <Register />
-              </GuestRoute>
-            }
-          />
-
-          {/* Protected pages */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/baby-profile"
-            element={
-              <ProtectedRoute>
-                <BabyProfile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/feed-tracker"
-            element={
-              <ProtectedRoute>
-                <FeedTracker />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/sleep-tracker"
-            element={
-              <ProtectedRoute>
-                <SleepTracker />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/diaper-tracker"
-            element={
-              <ProtectedRoute>
-                <DiaperTracker />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/growth-tracker"
-            element={
-              <ProtectedRoute>
-                <GrowthChart />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/checkups"
-            element={
-              <ProtectedRoute>
-                <CheckUps />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/allergies"
-            element={
-              <ProtectedRoute>
-                <Allergies />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/bath-time"
-            element={
-              <ProtectedRoute>
-                <BathTimeTracker />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Catch-all redirect */}
+          <Route path="/" element={<Home isAuthenticated={isAuthenticated} />} />
+          <Route path="/login" element={<Login onLogin={handleLogin} />} />
+          <Route path="/register" element={<Register />} />
+          
+          <Route element={<ProtectedRoutes isAuthenticated={isAuthenticated} />}>
+            <Route path="/dashboard" element={<Dashboard onLogout={handleLogout} />} />
+            <Route path="/baby-profile" element={<BabyProfile />} />
+            <Route path="/trackers" element={<TrackerMenu />} />
+            <Route path="/feeding" element={<FeedTracker />} />
+            <Route path="/diaper" element={<DiaperTracker />} />
+            <Route path="/sleep" element={<SleepTracker />} />
+            <Route path="/bath" element={<BathTime />} />
+            <Route path="/checkups" element={<CheckUps />} />
+            <Route path="/growth" element={<GrowthChart />} />
+            <Route path="/allergies" element={<Allergies />} />
+            <Route path="/settings" element={<Settings onLogout={handleLogout} />} />
+          </Route>
+          
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
-    </>
+    </Router>
   );
 }
 
 function App() {
   return (
-    <Router>
-      <AppWrapper />
-    </Router>
+    <ApiProvider>
+      <AppContent />
+    </ApiProvider>
   );
 }
 

@@ -1,29 +1,75 @@
-import axios from "axios";
-
-const BASE_URL = process.env.REACT_APP_API_URL || "https://baby-monitor-3vgm.onrender.com/api/allergies";
-
-const getToken = () => localStorage.getItem("token") || sessionStorage.getItem("token");
+import { post, get, put, del } from './client';
 
 export const getAllergies = async () => {
-  const token = getToken();
-  const res = await axios.get(BASE_URL, { headers: { Authorization: `Bearer ${token}` } });
-  return res.data;
+  try {
+    const response = await get('allergies');
+    return response.allergies || response.data || [];
+  } catch (error) {
+    console.error('Get allergies error:', error);
+    return [];
+  }
 };
 
-export const addAllergy = async (data) => {
-  const token = getToken();
-  const res = await axios.post(BASE_URL, data, { headers: { Authorization: `Bearer ${token}` } });
-  return res.data;
+export const getOneAllergy = async (id) => {
+  try {
+    const response = await get(`allergies/${id}`);
+    return {
+      success: true,
+      data: response.allergy || response.data
+    };
+  } catch (error) {
+    console.error('Get allergy error:', error);
+    return {
+      success: false,
+      message: error.data?.message || 'Failed to fetch allergy'
+    };
+  }
 };
 
-export const updateAllergy = async (id, data) => {
-  const token = getToken();
-  const res = await axios.put(`${BASE_URL}/${id}`, data, { headers: { Authorization: `Bearer ${token}` } });
-  return res.data;
+export const addAllergy = async (allergyData) => {
+  try {
+    const response = await post('allergies', allergyData);
+    return {
+      success: true,
+      data: response.allergy || response.data
+    };
+  } catch (error) {
+    console.error('Add allergy error:', error);
+    return {
+      success: false,
+      message: error.data?.message || 'Failed to add allergy'
+    };
+  }
+};
+
+export const updateAllergy = async (id, allergyData) => {
+  try {
+    const response = await put(`allergies/${id}`, allergyData);
+    return {
+      success: true,
+      data: response.allergy || response.data
+    };
+  } catch (error) {
+    console.error('Update allergy error:', error);
+    return {
+      success: false,
+      message: error.data?.message || 'Failed to update allergy'
+    };
+  }
 };
 
 export const deleteAllergy = async (id) => {
-  const token = getToken();
-  const res = await axios.delete(`${BASE_URL}/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-  return res.data;
+  try {
+    await del(`allergies/${id}`);
+    return {
+      success: true,
+      message: 'Allergy deleted successfully'
+    };
+  } catch (error) {
+    console.error('Delete allergy error:', error);
+    return {
+      success: false,
+      message: error.data?.message || 'Failed to delete allergy'
+    };
+  }
 };

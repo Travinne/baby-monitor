@@ -1,185 +1,130 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { getFeedings } from "../api/feeding.js";
-import { getSleeps } from "../api/sleep.js";
-import { getGrowth } from "../api/growth.js";
+import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
-export default function Home() {
-  const navigate = useNavigate();
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [baby, setBaby] = useState(null);
-  const [lastFeeding, setLastFeeding] = useState(null);
-  const [lastSleep, setLastSleep] = useState(null);
-  const [lastGrowth, setLastGrowth] = useState(null);
 
-  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+const Home = ({ isAuthenticated }) => {
+  const [showWelcome, setShowWelcome] = useState(false);
 
-  // Clock
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
+    setShowWelcome(true);
   }, []);
 
-  // Fetch baby and activities if logged in
-  useEffect(() => {
-    const babyData = localStorage.getItem("baby");
-    if (babyData) setBaby(JSON.parse(babyData));
-
-    if (!token) return;
-
-    const fetchActivities = async () => {
-      try {
-        const feedings = await getFeedings();
-        const sleeps = await getSleeps();
-        const growths = await getGrowth();
-
-        setLastFeeding(feedings?.sort((a, b) => new Date(b.time) - new Date(a.time))[0] || null);
-        setLastSleep(sleeps?.sort((a, b) => new Date(b.start_time) - new Date(a.start_time))[0] || null);
-        setLastGrowth(growths?.sort((a, b) => new Date(b.time) - new Date(a.time))[0] || null);
-      } catch (err) {
-        console.error("Failed to fetch last activities:", err);
-      }
-    };
-
-    fetchActivities();
-  }, [token]);
-
-  const formattedDate = currentTime.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-  const formattedTime = currentTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-
-  const calculateAge = (dob) => {
-    if (!dob) return null;
-    const diff = new Date() - new Date(dob);
-    const months = Math.floor(diff / (1000 * 60 * 60 * 24 * 30));
-    const years = Math.floor(months / 12);
-    return years > 0 ? `${years} yr${years > 1 ? "s" : ""} ${months % 12} mo` : `${months} mo`;
-  };
-
-  const features = [
-    { icon: "🍼", title: "Feeding Tracker", desc: "Monitor feeding schedules and amounts" },
-    { icon: "😴", title: "Sleep Tracker", desc: "Track sleep patterns and duration" },
-    { icon: "💉", title: "Health Records", desc: "Keep vaccination and checkup records" },
-    { icon: "📊", title: "Growth Charts", desc: "Monitor weight and height progress" },
-  ];
-
-  // **If user is not logged in, show marketing view**
-  // **If user is not logged in, show marketing view**
-if (!token) {
   return (
-    <div className="home-container">
-      <header className="home-header">
-        <h1>Welcome to Baby Monitor</h1>
-        <p className="home-subtitle">
-          Track your baby's growth, feeding, sleeping, and health records all in one place.
-        </p>
-        <div className="cta-section" style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-          <button className="btn btn-primary" onClick={() => navigate("/login")}>
-            Log In
-          </button>
-          <button className="btn btn-secondary" onClick={() => navigate("/register")}>
-            Register
-          </button>
+    <div className="home-page">
+      <nav className="navbar">
+        <div className="container">
+          <Link to="/" className="nav-brand">
+            <i className="fas fa-baby"></i> Baby Monitor
+          </Link>
+          <div className="nav-links">
+            <Link to="/" className="nav-link active">Home</Link>
+            {isAuthenticated ? (
+              <>
+                <Link to="/dashboard" className="nav-link">Dashboard</Link>
+                <Link to="/settings" className="nav-link">Settings</Link>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="nav-link">Login</Link>
+                <Link to="/register" className="nav-link">Register</Link>
+              </>
+            )}
+          </div>
         </div>
-      </header>
+      </nav>
 
-      <main className="home-main">
-        <h2 className="section-title">Key Features</h2>
-        <div className="features-grid">
-          {features.map((feature, index) => (
-            <div key={index} className="feature-card">
-              <div className="feature-icon">{feature.icon}</div>
-              <h3>{feature.title}</h3>
-              <p>{feature.desc}</p>
+      <main className="container">
+        <div className={`hero-section fade-in ${showWelcome ? 'visible' : ''}`}>
+          <div className="hero-content">
+            <h1>Welcome to Baby Monitor</h1>
+            <p className="subtitle">
+              The ultimate tool for tracking your baby's daily activities, health, and development
+            </p>
+            
+            {isAuthenticated ? (
+              <Link to="/dashboard" className="btn btn-primary btn-lg">
+                Go to Dashboard <i className="fas fa-arrow-right"></i>
+              </Link>
+            ) : (
+              <div className="cta-buttons">
+                <Link to="/login" className="btn btn-primary btn-lg">
+                  <i className="fas fa-sign-in-alt"></i> Login
+                </Link>
+                <Link to="/register" className="btn btn-secondary btn-lg">
+                  <i className="fas fa-user-plus"></i> Register
+                </Link>
+              </div>
+            )}
+          </div>
+          
+          <div className="hero-image">
+            <div className="floating-icons">
+              <div className="icon-item feeding">
+                <i className="fas fa-bottle-feeding"></i>
+                <span>Feeding</span>
+              </div>
+              <div className="icon-item sleeping">
+                <i className="fas fa-bed"></i>
+                <span>Sleeping</span>
+              </div>
+              <div className="icon-item diaper">
+                <i className="fas fa-baby"></i>
+                <span>Diaper</span>
+              </div>
+              <div className="icon-item health">
+                <i className="fas fa-heartbeat"></i>
+                <span>Health</span>
+              </div>
             </div>
-          ))}
+          </div>
+        </div>
+
+        <div className="features-section">
+          <h2 className="text-center">Everything You Need in One Place</h2>
+          <div className="features-grid">
+            <div className="feature-card">
+              <div className="feature-icon">
+                <i className="fas fa-chart-line"></i>
+              </div>
+              <h3>Growth Tracking</h3>
+              <p>Monitor your baby's height, weight, and milestones with detailed charts and insights.</p>
+            </div>
+            
+            <div className="feature-card">
+              <div className="feature-icon">
+                <i className="fas fa-clock"></i>
+              </div>
+              <h3>Activity Logging</h3>
+              <p>Track feeding times, diaper changes, sleep patterns, and bath times with ease.</p>
+            </div>
+            
+            <div className="feature-card">
+              <div className="feature-icon">
+                <i className="fas fa-bell"></i>
+              </div>
+              <h3>Smart Reminders</h3>
+              <p>Get timely reminders for feedings, medications, and important appointments.</p>
+            </div>
+            
+            <div className="feature-card">
+              <div className="feature-icon">
+                <i className="fas fa-mobile-alt"></i>
+              </div>
+              <h3>Mobile Friendly</h3>
+              <p>Access your baby's data anywhere, anytime from your smartphone or tablet.</p>
+            </div>
+          </div>
         </div>
       </main>
 
-      <footer className="home-footer">
-        <p>Baby Monitor App &copy; 2025</p>
-        <p className="footer-links">
-          <a href="/terms">Terms</a> | <a href="/privacy">Privacy</a> | <a href="/contact">Contact</a>
-        </p>
+      <footer className="footer">
+        <div className="container">
+          <p>&copy; {new Date().getFullYear()} Baby Monitor. All rights reserved.</p>
+          <p>Made with <i className="fas fa-heart" style={{color: '#ef4444'}}></i> for parents everywhere</p>
+        </div>
       </footer>
     </div>
   );
-}
+};
 
-  // **If logged in, show baby profile + last activities**
-  return (
-    <div className="home-container">
-      <header className="home-header">
-        <h1>Welcome to Baby Monitor</h1>
-        {baby && (
-          <div className="baby-profile">
-            <img src={baby.profileImage || "/default-baby.png"} alt={baby.fullName} className="baby-profile-img" />
-            <div>
-              <h2>{baby.fullName}</h2>
-              <p>Age: {calculateAge(baby.dob)}</p>
-            </div>
-          </div>
-        )}
-        <div className="date-time-display">
-          <div className="date-display">{formattedDate}</div>
-          <div className="time-display">{formattedTime}</div>
-        </div>
-      </header>
-
-      <main className="home-main">
-        <h2 className="section-title">Last Recorded Activities</h2>
-        <div className="activities-grid">
-          <div className="activity-card">
-            <h3>Last Feeding</h3>
-            {lastFeeding ? (
-              <p>
-                {lastFeeding.food_type} — {lastFeeding.amount} <br />
-                {new Date(lastFeeding.time).toLocaleString()}
-              </p>
-            ) : (
-              <p>No feeding recorded yet</p>
-            )}
-          </div>
-
-          <div className="activity-card">
-            <h3>Last Sleep</h3>
-            {lastSleep ? (
-              <p>
-                Start: {new Date(lastSleep.start_time).toLocaleString()} <br />
-                End: {new Date(lastSleep.end_time).toLocaleString()} <br />
-                Duration: {lastSleep.duration}
-              </p>
-            ) : (
-              <p>No sleep recorded yet</p>
-            )}
-          </div>
-
-          <div className="activity-card">
-            <h3>Last Growth</h3>
-            {lastGrowth ? (
-              <p>
-                Weight: {lastGrowth.weight} kg <br />
-                Height: {lastGrowth.height} cm <br />
-                {new Date(lastGrowth.time).toLocaleDateString()}
-              </p>
-            ) : (
-              <p>No growth recorded yet</p>
-            )}
-          </div>
-        </div>
-
-        <div className="cta-section">
-          <button className="btn btn-primary" onClick={() => navigate("/dashboard")}>
-            Go to Dashboard
-          </button>
-        </div>
-      </main>
-
-      <footer className="home-footer">
-        <p>Baby Monitor App &copy; 2025</p>
-        <p className="footer-links">
-          <a href="/terms">Terms</a> | <a href="/privacy">Privacy</a> | <a href="/contact">Contact</a>
-        </p>
-      </footer>
-    </div>
-  );
-}
+export default Home;
