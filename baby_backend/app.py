@@ -52,12 +52,14 @@ class Config:
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
     
-    # CORS Origins
+    # CORS Origins - Updated to include localhost:5175 and allow localhost on any port
     CORS_ORIGINS = [
         "http://localhost:5173",
         "http://localhost:5174",
+        "http://localhost:5175",  # Added this port
         "http://localhost:3000",
-        "https://baby-monitor-mf1e-q987tzyt6-travinnes-projects.vercel.app",
+        "http://localhost:*",  # Allows any localhost port
+        "https://baby-monitor-3vgm.onrender.com",
         "https://baby-monitor-frontend.vercel.app"
     ]
     
@@ -127,12 +129,14 @@ def create_app(config_class=Config):
     db.init_app(app)
     jwt = JWTManager(app)
     
-    # CORS configuration - Simplified
+    # More flexible CORS configuration
     CORS(app, 
          origins=app.config["CORS_ORIGINS"],
          supports_credentials=True,
          methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-         allow_headers=["Content-Type", "Authorization", "X-Requested-With"])
+         allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Origin", "Accept"],
+         expose_headers=["Content-Type", "Authorization"],
+         max_age=600)
     
     # Public routes that don't require JWT
     PUBLIC_ROUTES = [
@@ -141,7 +145,8 @@ def create_app(config_class=Config):
         "/api/auth/forgot-password",
         "/api/auth/reset-password",
         "/api/auth/check-availability",
-        "/api/health",  # Added missing health endpoint
+        "/api/health",  # Health endpoint
+        "/health",      # ADDED: Health endpoint at root
         "/api/docs",
         "/",  # Root endpoint
     ]
@@ -191,13 +196,13 @@ def create_app(config_class=Config):
     def before_request():
         """Process requests before they reach endpoints."""
         # Skip logging for health checks
-        if request.path not in ['/api/health', '/']:
+        if request.path not in ['/api/health', '/health', '/']:
             app.logger.info(f"Request: {request.method} {request.path} - IP: {request.remote_addr}")
         
         # Handle OPTIONS preflight
         if request.method == 'OPTIONS':
             response = jsonify({'status': 'ok'})
-            response.headers.add('Access-Control-Allow-Origin', ', '.join(app.config["CORS_ORIGINS"]))
+            response.headers.add('Access-Control-Allow-Origin', '*')
             response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
             response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH')
             response.headers.add('Access-Control-Allow-Credentials', 'true')
@@ -289,8 +294,9 @@ def create_app(config_class=Config):
             "authentication": "JWT Bearer token required for protected endpoints"
         })
     
-    # Health check endpoint with rate limiting
+    # Health check endpoint with rate limiting - ADDED BOTH ROUTES
     @app.route("/api/health")
+    @app.route("/health")  # ADDED: Root health endpoint
     @rate_limit(limit=10, per=60)  # 10 requests per minute
     def health_check():
         """Health check endpoint."""
@@ -324,7 +330,8 @@ def create_app(config_class=Config):
             "message": "Baby Monitor API",
             "version": app.config["API_VERSION"],
             "documentation": "/api/docs",
-            "health_check": "/api/health"
+            "health_check": "/api/health and /health",
+            "api_base": "/api"
         })
     
     # Register blueprints
@@ -444,6 +451,7 @@ if __name__ == "__main__":
     print(f"📝 Logs: {Config.LOG_FILE}")
     print(f"🌐 CORS Origins: {Config.CORS_ORIGINS}")
     print(f"🔐 JWT Enabled: Yes")
+    print(f"🏥 Health Endpoints: /api/health and /health")
     print("-" * 50)
     
     app.run(host="0.0.0.0", port=port, debug=debug)

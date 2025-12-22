@@ -1,5 +1,5 @@
 // client.js - Updated to match backend routes
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:10000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://baby-monitor-3vgm.onrender.com';
 
 // Request timeout (30 seconds for file uploads)
 const REQUEST_TIMEOUT = 30000;
