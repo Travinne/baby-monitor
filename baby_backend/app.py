@@ -453,6 +453,7 @@ if __name__ == "__main__":
     print(f"📝 Logs: {Config.LOG_FILE}")
     print(f"🌐 CORS Origins: {Config.CORS_ORIGINS}")
     print(f"🔐 JWT Enabled: Yes")
+    print(f"🏥 Health Endpoints: /api/health and /health (JWT PROTECTED)")
     print("-" * 50)
     
     app.run(host="0.0.0.0", port=port, debug=debug)
