@@ -145,8 +145,6 @@ def create_app(config_class=Config):
         "/api/auth/forgot-password",
         "/api/auth/reset-password",
         "/api/auth/check-availability",
-        "/api/health",  # Health endpoint
-        "/health",      # ADDED: Health endpoint at root
         "/api/docs",
         "/",  # Root endpoint
     ]
