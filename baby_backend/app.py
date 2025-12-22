@@ -193,9 +193,8 @@ def create_app(config_class=Config):
     @app.before_request
     def before_request():
         """Process requests before they reach endpoints."""
-        # Skip logging for health checks
-        if request.path not in ['/api/health', '/health', '/']:
-            app.logger.info(f"Request: {request.method} {request.path} - IP: {request.remote_addr}")
+        # Log all requests
+        app.logger.info(f"Request: {request.method} {request.path} - IP: {request.remote_addr}")
         
         # Handle OPTIONS preflight
         if request.method == 'OPTIONS':
@@ -222,19 +221,20 @@ def create_app(config_class=Config):
         if request.path.startswith("/static/") or request.path.startswith("/uploads/"):
             return
         
-        # Require JWT for all routes (including health endpoints)
-        try:
-            verify_jwt_in_request()
-            # Log successful authentication
-            user_id = get_jwt_identity()
-            app.logger.debug(f"Authenticated request from user: {user_id}")
-        except Exception as e:
-            app.logger.warning(f"Authentication failed for {request.path}: {str(e)}")
-            return jsonify({
-                "success": False,
-                "message": "Authentication required",
-                "error": str(e) if app.debug else "Invalid or missing token"
-            }), 401
+        # Require JWT for all API routes
+        if request.path.startswith("/api/"):
+            try:
+                verify_jwt_in_request()
+                # Log successful authentication
+                user_id = get_jwt_identity()
+                app.logger.debug(f"Authenticated request from user: {user_id}")
+            except Exception as e:
+                app.logger.warning(f"Authentication failed for {request.path}: {str(e)}")
+                return jsonify({
+                    "success": False,
+                    "message": "Authentication required",
+                    "error": str(e) if app.debug else "Invalid or missing token"
+                }), 401
     
     # JWT callbacks
     @jwt.expired_token_loader
@@ -291,47 +291,14 @@ def create_app(config_class=Config):
             "authentication": "JWT Bearer token required for protected endpoints"
         })
     
-    # Health check endpoint with rate limiting - PROTECTED WITH JWT
-    @app.route("/api/health")
-    @app.route("/health")
-    @rate_limit(limit=10, per=60)  # 10 requests per minute
-    def health_check():
-        """Health check endpoint - now requires authentication."""
-        try:
-            # Check database connection
-            from sqlalchemy import text
-            db.session.execute(text('SELECT 1'))
-            db_status = "connected"
-        except Exception as e:
-            db_status = f"error: {str(e)}"
-            app.logger.error(f"Database health check failed: {e}")
-        
-        request_time = request.environ.get('REQUEST_TIME', time.time())
-        response_time = time.time() - request_time
-        
-        # Get user info from JWT
-        user_id = get_jwt_identity()
-        
-        return jsonify({
-            "status": "healthy",
-            "service": "Baby Monitor API",
-            "version": app.config["API_VERSION"],
-            "timestamp": time.time(),
-            "response_time": f"{response_time:.3f}s",
-            "database": db_status,
-            "environment": "production" if not app.debug else "development",
-            "authenticated_user": user_id
-        }), 200
-    
-    # Root endpoint - PUBLIC
+    # Root endpoint
     @app.route("/")
     def index():
-        """Root endpoint - remains public."""
+        """Root endpoint."""
         return jsonify({
             "message": "Baby Monitor API",
             "version": app.config["API_VERSION"],
             "documentation": "/api/docs",
-            "health_check": "/api/health (requires authentication)",
             "api_base": "/api"
         })
     
@@ -435,7 +402,6 @@ def create_app(config_class=Config):
     app.logger.info("Baby Monitor API is ready to handle requests")
     app.logger.info(f"Running in {'production' if not app.debug else 'development'} mode")
     app.logger.info(f"CORS enabled for origins: {app.config['CORS_ORIGINS']}")
-    app.logger.info(f"Health endpoints (/api/health, /health) now require JWT authentication")
     
     return app
 
@@ -453,7 +419,6 @@ if __name__ == "__main__":
     print(f"📝 Logs: {Config.LOG_FILE}")
     print(f"🌐 CORS Origins: {Config.CORS_ORIGINS}")
     print(f"🔐 JWT Enabled: Yes")
-    print(f"🏥 Health Endpoints: /api/health and /health (JWT PROTECTED)")
     print("-" * 50)
     
     app.run(host="0.0.0.0", port=port, debug=debug)
