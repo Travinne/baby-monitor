@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { checkApiHealth } from '../api/client';
+
 
 const ApiContext = createContext();
 
