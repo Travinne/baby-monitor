@@ -274,39 +274,6 @@ export const upload = async (endpoint, formData, options = {}, timeout = 60000) 
   }
 };
 
-// Check API health
-export const checkApiHealth = async () => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/health`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      return { 
-        healthy: true, 
-        status: data.status,
-        service: data.service,
-        version: data.version 
-      };
-    }
-    
-    return { 
-      healthy: false, 
-      message: 'API is not responding properly',
-      status: response.status 
-    };
-  } catch (error) {
-    return { 
-      healthy: false, 
-      message: 'Cannot connect to API. Please check your connection.',
-      error: error.message 
-    };
-  }
-};
 
 // Check if user is authenticated
 export const isAuthenticated = () => {
