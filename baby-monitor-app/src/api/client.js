@@ -1,5 +1,6 @@
 // client.js - Updated to match backend routes
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://baby-monitor-3vgm.onrender.com';
+const API_BASE_URL =
+ import.meta.env.VITE_API_URL || 'https://baby-monitor-3vgm.onrender.com';
 
 // Request timeout (30 seconds for file uploads)
 const REQUEST_TIMEOUT = 30000;
@@ -26,6 +27,29 @@ const getHeaders = (isFormData = false) => {
   
   return headers;
 };
+
+export const checkApiHealth = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/`, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('API unreachable');
+    }
+
+    return {
+      healthy: true,
+      message: 'Connected to server',
+    };
+  } catch (error) {
+    throw new Error('Cannot connect to server');
+  }
+};
+
 
 const handleResponse = async (response) => {
   // Try to parse JSON, but handle non-JSON responses

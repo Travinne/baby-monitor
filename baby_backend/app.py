@@ -60,7 +60,8 @@ class Config:
         "http://localhost:3000",
         "http://localhost:*",  # Allows any localhost port
         "https://baby-monitor-3vgm.onrender.com",
-        "https://baby-monitor-frontend.vercel.app"
+        "https://baby-monitor-frontend.vercel.app",
+        "https://baby-monitor-app-travinnes-projects.vercel.app"
     ]
     
     # Rate Limiting (in-memory for development, use Redis in production)
