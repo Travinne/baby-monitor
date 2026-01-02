@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager, verify_jwt_in_request
+from flask_jwt_extended import JWTManager, verify_jwt_in_request, get_jwt_identity
 from datetime import timedelta
 import logging
 from logging.handlers import RotatingFileHandler
@@ -48,6 +48,7 @@ class Config:
         "http://localhost:5175",
         "http://localhost:3000",
         "https://baby-monitor-app-git-main-travinnes-projects.vercel.app",
+        "https://baby-monitor-3vgm.onrender.com",
     ]
 
 
@@ -84,28 +85,44 @@ def create_app(config_class=Config):
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
     db.init_app(app)
-    JWTManager(app)
+    jwt = JWTManager(app)
 
+    # Enable CORS for all routes
     CORS(
         app,
-        resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}},
-        supports_credentials=False,
-        allow_headers=["Content-Type", "Authorization"],
+        resources={
+            r"/api/*": {"origins": app.config["CORS_ORIGINS"]},
+            r"/uploads/*": {"origins": app.config["CORS_ORIGINS"]},
+        },
+        supports_credentials=True,
+        allow_headers=["Content-Type", "Authorization", "Accept"],
         methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+        expose_headers=["Content-Disposition"],
     )
 
     @app.before_request
     def auth_guard():
+        # Skip auth for OPTIONS requests (CORS preflight)
         if request.method == "OPTIONS":
             return None
 
+        # Skip auth for auth routes, static files, and root
         if request.path.startswith("/api/auth"):
             return None
 
-        if not request.path.startswith("/api"):
+        if request.path.startswith("/uploads/"):
             return None
 
-        verify_jwt_in_request()
+        if request.path == "/" or request.path == "/api/docs":
+            return None
+
+        # Require JWT for all other API routes
+        if request.path.startswith("/api"):
+            try:
+                verify_jwt_in_request()
+            except Exception as e:
+                app.logger.warning(f"JWT verification failed: {str(e)}")
+                return jsonify({"message": "Authentication required"}), 401
 
     @app.route("/")
     def index():
@@ -115,6 +132,7 @@ def create_app(config_class=Config):
                 "version": app.config["API_VERSION"],
                 "api_base": "/api",
                 "documentation": "/api/docs",
+                "status": "healthy",
             }
         )
 
@@ -124,15 +142,66 @@ def create_app(config_class=Config):
             {
                 "name": "Baby Monitor API",
                 "version": app.config["API_VERSION"],
-                "auth": "/api/auth",
-                "baby": "/api/baby",
-                "feedings": "/api/feedings",
-                "sleep": "/api/sleep",
-                "diapers": "/api/diapers",
-                "baths": "/api/baths",
-                "growth": "/api/growth",
-                "checkups": "/api/checkups",
-                "allergies": "/api/allergies",
+                "endpoints": {
+                    "auth": {
+                        "login": "POST /api/auth/login",
+                        "register": "POST /api/auth/register",
+                        "logout": "POST /api/auth/logout",
+                        "verify": "GET /api/auth/verify",
+                    },
+                    "baby": {
+                        "get_all": "GET /api/baby",
+                        "create": "POST /api/baby",
+                        "get_one": "GET /api/baby/<id>",
+                        "update": "PUT /api/baby/<id>",
+                        "delete": "DELETE /api/baby/<id>",
+                        "upload_photo": "POST /api/baby/<id>/photo",
+                    },
+                    "feedings": {
+                        "get_all": "GET /api/feedings",
+                        "create": "POST /api/feedings",
+                        "get_by_baby": "GET /api/feedings/baby/<baby_id>",
+                    },
+                    "sleep": {
+                        "get_all": "GET /api/sleep",
+                        "create": "POST /api/sleep",
+                        "get_by_baby": "GET /api/sleep/baby/<baby_id>",
+                    },
+                    "diapers": {
+                        "get_all": "GET /api/diapers",
+                        "create": "POST /api/diapers",
+                        "get_by_baby": "GET /api/diapers/baby/<baby_id>",
+                    },
+                    "baths": {
+                        "get_all": "GET /api/baths",
+                        "create": "POST /api/baths",
+                        "get_by_baby": "GET /api/baths/baby/<baby_id>",
+                    },
+                    "growth": {
+                        "get_all": "GET /api/growth",
+                        "create": "POST /api/growth",
+                        "get_by_baby": "GET /api/growth/baby/<baby_id>",
+                    },
+                    "checkups": {
+                        "get_all": "GET /api/checkups",
+                        "create": "POST /api/checkups",
+                        "get_by_baby": "GET /api/checkups/baby/<baby_id>",
+                    },
+                    "allergies": {
+                        "get_all": "GET /api/allergies",
+                        "create": "POST /api/allergies",
+                        "get_by_baby": "GET /api/allergies/baby/<baby_id>",
+                    },
+                    "settings": {
+                        "get": "GET /api/settings",
+                        "update": "PUT /api/settings",
+                    },
+                    "notifications": {
+                        "get_all": "GET /api/notifications",
+                        "mark_read": "PUT /api/notifications/<id>/read",
+                        "mark_all_read": "PUT /api/notifications/read-all",
+                    },
+                },
             }
         )
 
@@ -140,6 +209,7 @@ def create_app(config_class=Config):
     def serve_upload(filename):
         return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
+    # Register blueprints
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(allergies_bp, url_prefix="/api/allergies")
     app.register_blueprint(bath_bp, url_prefix="/api/baths")
@@ -162,4 +232,4 @@ app = create_app()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, debug=True)

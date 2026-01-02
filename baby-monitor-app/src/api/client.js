@@ -1,6 +1,5 @@
-// client.js - Updated to match backend routes
-const API_BASE_URL =
- import.meta.env.VITE_API_URL || 'https://baby-monitor-3vgm.onrender.com/api';
+// client.js - Updated to match backend routes exactly
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://baby-monitor-3vgm.onrender.com/api';
 
 // Request timeout (30 seconds for file uploads)
 const REQUEST_TIMEOUT = 30000;
@@ -30,7 +29,7 @@ const getHeaders = (isFormData = false) => {
 
 export const checkApiHealth = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/`, {
+    const response = await fetch(`${API_BASE_URL.replace('/api', '')}/`, {
       method: 'GET',
       headers: {
         Accept: 'application/json',
@@ -50,6 +49,12 @@ export const checkApiHealth = async () => {
   }
 };
 
+// Fix: Since API_BASE_URL already includes /api, we don't need to prepend it
+const getFullUrl = (endpoint) => {
+  // Remove leading slash if present to avoid double slashes
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+  return `${API_BASE_URL}/${cleanEndpoint}`;
+};
 
 const handleResponse = async (response) => {
   // Try to parse JSON, but handle non-JSON responses
@@ -105,7 +110,7 @@ const fetchWithTimeout = async (url, options, timeout = REQUEST_TIMEOUT, retries
 // GET request
 export const get = async (endpoint, options = {}, timeout = REQUEST_TIMEOUT) => {
   try {
-    const url = `${API_BASE_URL}/${endpoint}`;
+    const url = getFullUrl(endpoint);
     console.log(`GET ${url}`);
     
     const response = await fetchWithTimeout(url, {
@@ -146,7 +151,7 @@ export const get = async (endpoint, options = {}, timeout = REQUEST_TIMEOUT) => 
 // POST request
 export const post = async (endpoint, data = {}, options = {}, timeout = REQUEST_TIMEOUT) => {
   try {
-    const url = `${API_BASE_URL}/${endpoint}`;
+    const url = getFullUrl(endpoint);
     console.log(`POST ${url}`, data);
     
     const response = await fetchWithTimeout(url, {
@@ -185,7 +190,7 @@ export const post = async (endpoint, data = {}, options = {}, timeout = REQUEST_
 // PUT request
 export const put = async (endpoint, data = {}, options = {}, timeout = REQUEST_TIMEOUT) => {
   try {
-    const url = `${API_BASE_URL}/${endpoint}`;
+    const url = getFullUrl(endpoint);
     console.log(`PUT ${url}`, data);
     
     const response = await fetchWithTimeout(url, {
@@ -224,7 +229,7 @@ export const put = async (endpoint, data = {}, options = {}, timeout = REQUEST_T
 // DELETE request
 export const del = async (endpoint, options = {}, timeout = REQUEST_TIMEOUT) => {
   try {
-    const url = `${API_BASE_URL}/${endpoint}`;
+    const url = getFullUrl(endpoint);
     console.log(`DELETE ${url}`);
     
     const response = await fetchWithTimeout(url, {
@@ -262,7 +267,7 @@ export const del = async (endpoint, options = {}, timeout = REQUEST_TIMEOUT) => 
 // Upload file (FormData)
 export const upload = async (endpoint, formData, options = {}, timeout = 60000) => {
   try {
-    const url = `${API_BASE_URL}/${endpoint}`;
+    const url = getFullUrl(endpoint);
     console.log(`UPLOAD ${url}`);
     
     const response = await fetchWithTimeout(url, {
@@ -297,7 +302,6 @@ export const upload = async (endpoint, formData, options = {}, timeout = 60000) 
     throw wrappedError;
   }
 };
-
 
 // Check if user is authenticated
 export const isAuthenticated = () => {
@@ -337,6 +341,13 @@ export const getStoredUser = () => {
     }
   }
   return null;
+};
+
+// Get image URL for baby photos
+export const getImageUrl = (filename) => {
+  if (!filename) return null;
+  const base = API_BASE_URL.replace('/api', '');
+  return `${base}/uploads/baby_photos/${filename}`;
 };
 
 // Enhanced error handler for API calls
@@ -391,4 +402,111 @@ export const handleApiError = (error, defaultMessage = 'An error occurred') => {
     success: false,
     message: error?.message || defaultMessage
   };
+};
+
+// API service functions that match backend routes
+export const api = {
+  // Auth endpoints
+  auth: {
+    login: (credentials) => post('auth/login', credentials),
+    register: (userData) => post('auth/register', userData),
+    logout: () => post('auth/logout'),
+    refresh: () => post('auth/refresh'),
+    verify: () => get('auth/verify'),
+  },
+  
+  // Baby endpoints
+  baby: {
+    getAll: () => get('baby'),
+    getById: (id) => get(`baby/${id}`),
+    create: (babyData) => post('baby', babyData),
+    update: (id, babyData) => put(`baby/${id}`, babyData),
+    delete: (id) => del(`baby/${id}`),
+    uploadPhoto: (id, formData) => upload(`baby/${id}/photo`, formData),
+  },
+  
+  // Feeding endpoints
+  feedings: {
+    getAll: () => get('feedings'),
+    getById: (id) => get(`feedings/${id}`),
+    create: (feedingData) => post('feedings', feedingData),
+    update: (id, feedingData) => put(`feedings/${id}`, feedingData),
+    delete: (id) => del(`feedings/${id}`),
+    getByBaby: (babyId) => get(`feedings/baby/${babyId}`),
+  },
+  
+  // Sleep endpoints
+  sleep: {
+    getAll: () => get('sleep'),
+    getById: (id) => get(`sleep/${id}`),
+    create: (sleepData) => post('sleep', sleepData),
+    update: (id, sleepData) => put(`sleep/${id}`, sleepData),
+    delete: (id) => del(`sleep/${id}`),
+    getByBaby: (babyId) => get(`sleep/baby/${babyId}`),
+  },
+  
+  // Diaper endpoints
+  diapers: {
+    getAll: () => get('diapers'),
+    getById: (id) => get(`diapers/${id}`),
+    create: (diaperData) => post('diapers', diaperData),
+    update: (id, diaperData) => put(`diapers/${id}`, diaperData),
+    delete: (id) => del(`diapers/${id}`),
+    getByBaby: (babyId) => get(`diapers/baby/${babyId}`),
+  },
+  
+  // Bath endpoints
+  baths: {
+    getAll: () => get('baths'),
+    getById: (id) => get(`baths/${id}`),
+    create: (bathData) => post('baths', bathData),
+    update: (id, bathData) => put(`baths/${id}`, bathData),
+    delete: (id) => del(`baths/${id}`),
+    getByBaby: (babyId) => get(`baths/baby/${babyId}`),
+  },
+  
+  // Growth endpoints
+  growth: {
+    getAll: () => get('growth'),
+    getById: (id) => get(`growth/${id}`),
+    create: (growthData) => post('growth', growthData),
+    update: (id, growthData) => put(`growth/${id}`, growthData),
+    delete: (id) => del(`growth/${id}`),
+    getByBaby: (babyId) => get(`growth/baby/${babyId}`),
+  },
+  
+  // Checkup endpoints
+  checkups: {
+    getAll: () => get('checkups'),
+    getById: (id) => get(`checkups/${id}`),
+    create: (checkupData) => post('checkups', checkupData),
+    update: (id, checkupData) => put(`checkups/${id}`, checkupData),
+    delete: (id) => del(`checkups/${id}`),
+    getByBaby: (babyId) => get(`checkups/baby/${babyId}`),
+  },
+  
+  // Allergies endpoints
+  allergies: {
+    getAll: () => get('allergies'),
+    getById: (id) => get(`allergies/${id}`),
+    create: (allergyData) => post('allergies', allergyData),
+    update: (id, allergyData) => put(`allergies/${id}`, allergyData),
+    delete: (id) => del(`allergies/${id}`),
+    getByBaby: (babyId) => get(`allergies/baby/${babyId}`),
+  },
+  
+  // Settings endpoints
+  settings: {
+    getUserSettings: () => get('settings'),
+    updateUserSettings: (settings) => put('settings', settings),
+  },
+  
+  // Notifications endpoints
+  notifications: {
+    getAll: () => get('notifications'),
+    getUnread: () => get('notifications/unread'),
+    markAsRead: (id) => put(`notifications/${id}/read`),
+    markAllAsRead: () => put('notifications/read-all'),
+    delete: (id) => del(`notifications/${id}`),
+  },
 };
