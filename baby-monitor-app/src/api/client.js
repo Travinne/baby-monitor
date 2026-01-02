@@ -1,6 +1,6 @@
 // client.js - Updated to match backend routes
 const API_BASE_URL =
- import.meta.env.VITE_API_URL || 'https://baby-monitor-3vgm.onrender.com';
+ import.meta.env.VITE_API_URL || 'https://baby-monitor-3vgm.onrender.com/api';
 
 // Request timeout (30 seconds for file uploads)
 const REQUEST_TIMEOUT = 30000;

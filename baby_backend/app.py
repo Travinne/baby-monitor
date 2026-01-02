@@ -48,7 +48,6 @@ class Config:
         "http://localhost:5175",
         "http://localhost:3000",
         "https://baby-monitor-app-git-main-travinnes-projects.vercel.app",
-        "https://baby-monitor-3vgm.onrender.com",
     ]
 
 
@@ -85,80 +84,57 @@ def create_app(config_class=Config):
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
     db.init_app(app)
-    jwt = JWTManager(app)
+    JWTManager(app)
 
     CORS(
         app,
-        origins=app.config["CORS_ORIGINS"],
-        supports_credentials=True,
+        resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}},
+        supports_credentials=False,
         allow_headers=["Content-Type", "Authorization"],
         methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     )
 
-    PUBLIC_ROUTES = (
-        "/",
-        "/api/docs",
-        "/api/auth/login",
-        "/api/auth/register",
-        "/api/auth/forgot-password",
-        "/api/auth/reset-password",
-        "/uploads/",
-        "/static/",
-    )
-
     @app.before_request
-    def protect_routes():
+    def auth_guard():
         if request.method == "OPTIONS":
-            return
+            return None
 
-        if request.path.startswith(PUBLIC_ROUTES):
-            return
+        if request.path.startswith("/api/auth"):
+            return None
 
-        if request.path.startswith("/api/"):
-            try:
-                verify_jwt_in_request()
-            except Exception:
-                return jsonify({
-                    "success": False,
-                    "message": "Authentication required"
-                }), 401
+        if not request.path.startswith("/api"):
+            return None
 
-    @jwt.expired_token_loader
-    def expired_token(jwt_header, jwt_payload):
-        return jsonify(success=False, message="Token expired"), 401
-
-    @jwt.invalid_token_loader
-    def invalid_token(error):
-        return jsonify(success=False, message="Invalid token"), 401
-
-    @jwt.unauthorized_loader
-    def missing_token(error):
-        return jsonify(success=False, message="Authorization required"), 401
+        verify_jwt_in_request()
 
     @app.route("/")
     def index():
-        return jsonify({
-            "message": "Baby Monitor API",
-            "version": app.config["API_VERSION"],
-            "api_base": "/api",
-            "documentation": "/api/docs",
-        })
+        return jsonify(
+            {
+                "message": "Baby Monitor API",
+                "version": app.config["API_VERSION"],
+                "api_base": "/api",
+                "documentation": "/api/docs",
+            }
+        )
 
     @app.route("/api/docs")
     def docs():
-        return jsonify({
-            "name": "Baby Monitor API",
-            "version": app.config["API_VERSION"],
-            "auth": "/api/auth",
-            "baby": "/api/baby",
-            "feedings": "/api/feedings",
-            "sleep": "/api/sleep",
-            "diapers": "/api/diapers",
-            "baths": "/api/baths",
-            "growth": "/api/growth",
-            "checkups": "/api/checkups",
-            "allergies": "/api/allergies",
-        })
+        return jsonify(
+            {
+                "name": "Baby Monitor API",
+                "version": app.config["API_VERSION"],
+                "auth": "/api/auth",
+                "baby": "/api/baby",
+                "feedings": "/api/feedings",
+                "sleep": "/api/sleep",
+                "diapers": "/api/diapers",
+                "baths": "/api/baths",
+                "growth": "/api/growth",
+                "checkups": "/api/checkups",
+                "allergies": "/api/allergies",
+            }
+        )
 
     @app.route("/uploads/baby_photos/<path:filename>")
     def serve_upload(filename):
