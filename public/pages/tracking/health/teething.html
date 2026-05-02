@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teething - BabyTrack</title>
+    <link rel="stylesheet" href="/public/css/style.css">
+    <script src="/public/js/app.js"></script>
+    <script src="/public/js/sidebar.js"></script>
+</head>
+<body data-page="health-teething">
+    <div id="navbar"></div>
+    <div class="layout-container">
+        <aside id="sidebar"></aside>
+        <main class="container">
+            <div class="page-header">
+                <h1>🦷 Teething & Dentist</h1>
+                <div class="sub-nav">
+                    <a href="/public/pages/tracking/health/overview.html">Overview</a>
+                    <a href="/public/pages/tracking/health/appointments.html">Appointments</a>
+                    <a href="/public/pages/tracking/health/medications.html">Medications</a>
+                    <a href="/public/pages/tracking/health/allergies.html">Allergies</a>
+                    <a href="/public/pages/tracking/health/teething.html" class="active">Teething</a>
+                </div>
+            </div>
+            <div class="form-card">
+                <h3>🦷 Dentist Visit Reminder</h3>
+                <div class="input-group">
+                    <label>Date</label>
+                    <input type="date" id="dentist-date">
+                </div>
+                <button id="set-dentist" class="btn-primary">Set Reminder</button>
+                <div id="dentist-status" class="small-text" style="margin-top: 0.5rem;"></div>
+            </div>
+            <div class="form-card">
+                <h3>🦷 Log Tooth Eruption</h3>
+                <form id="teething-form">
+                    <div class="input-group">
+                        <label>Tooth Name</label>
+                        <input type="text" id="tooth-name" placeholder="e.g., Lower central incisor" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Eruption Date</label>
+                        <input type="date" id="eruption-date" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Symptoms (optional)</label>
+                        <textarea id="symptoms" rows="2" placeholder="Crying, drooling, fever..."></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">Add Tooth</button>
+                </form>
+                <ul id="teething-list" class="data-list" style="margin-top: 1rem;"></ul>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

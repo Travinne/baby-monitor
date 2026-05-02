@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Allergies - BabyTrack</title>
+    <link rel="stylesheet" href="/public/css/style.css">
+    <script src="/public/js/app.js"></script>
+    <script src="/public/js/sidebar.js"></script>
+</head>
+<body data-page="health-allergies">
+    <div id="navbar"></div>
+    <div class="layout-container">
+        <aside id="sidebar"></aside>
+        <main class="container">
+            <div class="page-header">
+                <h1>⚠️ Allergies</h1>
+                <div class="sub-nav">
+                    <a href="/public/pages/tracking/health/overview.html">Overview</a>
+                    <a href="/public/pages/tracking/health/appointments.html">Appointments</a>
+                    <a href="/public/pages/tracking/health/medications.html">Medications</a>
+                    <a href="/public/pages/tracking/health/allergies.html" class="active">Allergies</a>
+                    <a href="/public/pages/tracking/health/teething.html">Teething</a>
+                </div>
+            </div>
+            <div class="form-card">
+                <h3>Record Allergy</h3>
+                <form id="allergy-form">
+                    <div class="input-group">
+                        <label>Allergen Name</label>
+                        <input type="text" id="allergy-name" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Severity</label>
+                        <select id="allergy-severity">
+                            <option value="Mild">Mild</option>
+                            <option value="Moderate">Moderate</option>
+                            <option value="Severe">Severe</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Reaction / Notes</label>
+                        <textarea id="allergy-reaction" rows="2" required></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">Save Allergy</button>
+                </form>
+            </div>
+            <div class="data-section">
+                <h3>Known Allergies</h3>
+                <ul id="allergy-list" class="data-list"></ul>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

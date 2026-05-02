@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diaper Tracker - BabyTrack</title>
+    <link rel="stylesheet" href="/public/css/style.css">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <script type="module" src="/public/js/app.js"></script>
+</head>
+<body data-page="diaper">
+     <div id="navbar"></div>
+    <div class="layout-container">
+        <aside id="sidebar"></aside>
+    <main class="container">
+        <div class="page-header">
+            <h1>🧷 Diaper Changes</h1>
+        </div>
+        <div class="form-card">
+            <h3>Log Diaper Change</h3>
+            <form id="tracker-form">
+                <div class="input-group">
+                    <label for="diaper-type">Type</label>
+                    <select id="diaper-type" required>
+                        <option value="Wet">Wet</option>
+                        <option value="Dirty">Dirty</option>
+                        <option value="Mixed">Mixed</option>
+                        <option value="Dry">Dry (Check)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="change-time">Time</label>
+                    <input type="datetime-local" id="change-time" required>
+                </div>
+                <div class="input-group">
+                    <label for="diaper-notes">Notes (e.g., rash, unusual)</label>
+                    <textarea id="diaper-notes" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Change</button>
+            </form>
+        </div>
+        <div class="data-section">
+            <h3>Diaper Change History</h3>
+            <ul id="logs-list" class="data-list"></ul>
+        </div>
+    </main>
+    <script src="/public/js/app.js"></script>
+    <script src="/public/js/sidebar.js"></script>
+</body>
+</html>

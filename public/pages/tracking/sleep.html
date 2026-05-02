@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Sleep Tracker + Lullaby Alarm - BabyTrack</title>
+    <link rel="stylesheet" href="/public/css/style.css">
+</head>
+<body>
+    <div id="navbar"></div>
+    <div class="layout-container">
+        <aside id="sidebar"></aside>
+        <main class="container">
+            <div class="page-header">
+                <h1>💤 Sleep Tracker + Lullaby Alarm</h1>
+                <p class="small-text">Set a wake‑up alarm → play lullaby → alarm stops lullaby and rings at the set time</p>
+            </div>
+
+            <div class="form-card">
+                <h3>📝 Log Sleep Session</h3>
+                <form id="tracker-form">
+                    <div class="input-group">
+                        <label for="start-time">Start Time</label>
+                        <input type="datetime-local" id="start-time" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="end-time">End Time</label>
+                        <input type="datetime-local" id="end-time" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="notes">Notes (optional)</label>
+                        <textarea id="notes" rows="2" placeholder="Any interruptions, location..."></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">➕ Add Sleep Record</button>
+                </form>
+            </div>
+
+            <div class="alarm-card" id="sleep-alarm-card">
+                <h3>⏰ Smart Sleep Alarm</h3>
+                <div class="flex-row" style="margin-bottom: 1rem;">
+                    <div style="flex:2">
+                        <label>Wake‑up alarm time</label>
+                        <input type="datetime-local" id="sleep-alarm-datetime" style="width:100%;">
+                    </div>
+                    <button id="set-sleep-alarm-btn" class="btn-primary">🔔 Set Alarm</button>
+                </div>
+                <div class="flex-row" style="justify-content: space-between;">
+                    <div>
+                        <button id="play-lullaby-btn" class="btn-outline">🎵 Play Lullaby</button>
+                        <button id="stop-lullaby-btn" class="btn-outline">⏹️ Stop Lullaby</button>
+                    </div>
+                    <div id="sleep-alarm-status" class="alarm-badge">⏳ No alarm set</div>
+                </div>
+                <div id="lullaby-status" class="small-text" style="margin-top: 0.6rem;">🎧 Lullaby not playing</div>
+                <hr>
+                <div class="small-text">✨ When alarm time arrives, lullaby stops automatically and a deep beep alarm plays.</div>
+            </div>
+
+            <div class="data-section">
+                <h3>📋 Recent Sleep Logs</h3>
+                <ul id="logs-list" class="data-list"></ul>
+            </div>
+        </main>
+    </div>
+
+    <script src="/public/js/app.js"></script>
+    <script src="/public/js/sidebar.js"></script>
+    <script>
+        (function() {
+            const Storage = {
+                getLogs(key) {
+                    const raw = localStorage.getItem(key);
+                    return raw ? JSON.parse(raw) : [];
+                },
+                addLog(key, entry) {
+                    const logs = this.getLogs(key);
+                    logs.push({ ...entry, id: Date.now() });
+                    localStorage.setItem(key, JSON.stringify(logs));
+                }
+            };
+
+            const AudioFX = (function() {
+                let audioCtx = null;
+                let isLullabyPlaying = false;
+                let lullabyTimeout = null;
+                let currentNoteIndex = 0;
+                let stopFlag = false;
+                const melodyNotes = [261.63, 293.66, 329.63, 261.63, 329.63, 293.66, 261.63, 392.00, 349.23, 329.63, 261.63, 392.00, 349.23, 329.63, 261.63, 196.00, 261.63, 196.00, 329.63, 293.66, 261.63];
+                
+                async function init() {
+                    if (audioCtx) return audioCtx;
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    return audioCtx;
+                }
+                async function resume() {
+                    if (!audioCtx) await init();
+                    if (audioCtx.state === 'suspended') await audioCtx.resume();
+                }
+                function playTone(freq, duration, volume = 0.2) {
+                    if (!audioCtx || audioCtx.state !== 'running') return;
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+                    gain.gain.value = volume;
+                    const now = audioCtx.currentTime;
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+                    osc.start();
+                    osc.stop(now + duration);
+                }
+                function scheduleLoop() {
+                    if (!isLullabyPlaying || stopFlag) return;
+                    playTone(melodyNotes[currentNoteIndex % melodyNotes.length], 0.45, 0.18);
+                    currentNoteIndex++;
+                    lullabyTimeout = setTimeout(() => scheduleLoop(), 480);
+                }
+                async function startLullaby() {
+                    await init();
+                    await resume();
+                    if (isLullabyPlaying) stopLullaby();
+                    isLullabyPlaying = true;
+                    stopFlag = false;
+                    currentNoteIndex = 0;
+                    scheduleLoop();
+                }
+                function stopLullaby() {
+                    if (!isLullabyPlaying) return;
+                    isLullabyPlaying = false;
+                    stopFlag = true;
+                    if (lullabyTimeout) clearTimeout(lullabyTimeout);
+                    lullabyTimeout = null;
+                }
+                function playSleepAlarm() {
+                    if (!audioCtx || audioCtx.state !== 'running') return;
+                    let beepCount = 0;
+                    function beep() {
+                        if (beepCount >= 6) return;
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.type = 'sawtooth';
+                        osc.frequency.value = 480;
+                        gain.gain.value = 0.25;
+                        const now = audioCtx.currentTime;
+                        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+                        osc.start();
+                        osc.stop(now + 0.5);
+                        beepCount++;
+                        setTimeout(beep, 700);
+                    }
+                    beep();
+                }
+                return {
+                    initAndResume: async () => { await init(); await resume(); },
+                    playLullaby: startLullaby,
+                    stopLullaby,
+                    triggerSleepAlarm: () => { playSleepAlarm(); },
+                    isLullabyActive: () => isLullabyPlaying
+                };
+            })();
+
+            const form = document.getElementById('tracker-form');
+            const listEl = document.getElementById('logs-list');
+            const playBtn = document.getElementById('play-lullaby-btn');
+            const stopBtn = document.getElementById('stop-lullaby-btn');
+            const setAlarmBtn = document.getElementById('set-sleep-alarm-btn');
+            const alarmInput = document.getElementById('sleep-alarm-datetime');
+            const alarmStatusSpan = document.getElementById('sleep-alarm-status');
+            const lullabyStatusSpan = document.getElementById('lullaby-status');
+
+            let activeAlarmTime = null;
+            let alarmInterval = null;
+
+            function updateUI() {
+                if (lullabyStatusSpan) {
+                    lullabyStatusSpan.innerText = AudioFX.isLullabyActive() ? '🎶 Lullaby is playing...' : '🎧 Lullaby not playing';
+                    const card = document.getElementById('sleep-alarm-card');
+                    if(AudioFX.isLullabyActive()) card.classList.add('lullaby-active');
+                    else card.classList.remove('lullaby-active');
+                }
+                if (activeAlarmTime) {
+                    alarmStatusSpan.innerHTML = `⏰ Alarm set for ${new Date(activeAlarmTime).toLocaleString()}`;
+                } else {
+                    alarmStatusSpan.innerHTML = `💤 No active wake alarm`;
+                }
+            }
+
+            function clearAlarm() {
+                if (alarmInterval) clearInterval(alarmInterval);
+                activeAlarmTime = null;
+                updateUI();
+            }
+
+            function checkAlarm() {
+                if (!activeAlarmTime) return;
+                if (Date.now() >= activeAlarmTime) {
+                    if (AudioFX.isLullabyActive()) AudioFX.stopLullaby();
+                    AudioFX.triggerSleepAlarm();
+                    alert("🔔 WAKE-UP ALARM! Time to wake baby 🌞");
+                    clearAlarm();
+                }
+            }
+
+            function setAlarm() {
+                const datetime = alarmInput.value;
+                if (!datetime) { alert("Select a future date & time"); return; }
+                const target = new Date(datetime).getTime();
+                if (isNaN(target) || target <= Date.now()) { alert("Please choose a future time"); return; }
+                if (alarmInterval) clearInterval(alarmInterval);
+                activeAlarmTime = target;
+                alarmInterval = setInterval(checkAlarm, 1000);
+                updateUI();
+                alert(`✅ Sleep alarm set for ${new Date(target).toLocaleString()}. Lullaby will stop & alarm rings.`);
+            }
+
+            function renderLogs() {
+                if (!listEl) return;
+                const logs = Storage.getLogs('sleep_logs');
+                if (!logs.length) { listEl.innerHTML = '<li class="empty-state">😴 No sleep records yet.</li>'; return; }
+                listEl.innerHTML = logs.map(log => `<li class="data-item">😴 ${new Date(log.start).toLocaleString()} → ${new Date(log.end).toLocaleString()} <br> ${log.notes || '—'}</li>`).join('');
+            }
+
+            form?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const start = document.getElementById('start-time').value;
+                const end = document.getElementById('end-time').value;
+                const notes = document.getElementById('notes').value;
+                if (!start || !end) return;
+                Storage.addLog('sleep_logs', { start, end, notes });
+                renderLogs();
+                form.reset();
+            });
+
+            playBtn?.addEventListener('click', async () => { await AudioFX.initAndResume(); AudioFX.playLullaby(); updateUI(); });
+            stopBtn?.addEventListener('click', () => { AudioFX.stopLullaby(); updateUI(); });
+            setAlarmBtn?.addEventListener('click', async () => { await AudioFX.initAndResume(); setAlarm(); });
+
+            renderLogs();
+            updateUI();
+        })();
+    </script>
+</body>
+</html>

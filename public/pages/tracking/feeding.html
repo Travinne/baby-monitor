@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Feeding Tracker + Multiple Alarms - BabyTrack</title>
+    <link rel="stylesheet" href="/public/css/style.css">
+</head>
+<body>
+    <div id="navbar"></div>
+    <div class="layout-container">
+        <aside id="sidebar"></aside>
+        <main class="container">
+            <div class="page-header">
+                <h1>🍼 Feeding Log + Smart Daily Alarms</h1>
+                <p class="small-text">Set multiple feeding alarms for different times of the day. Each alarm triggers a <strong>distinct high‑pitched ringtone</strong> (different from sleep alarm).</p>
+            </div>
+
+            <div class="form-card">
+                <h3>📝 Log Feeding</h3>
+                <form id="tracker-form">
+                    <div class="input-group">
+                        <label for="feeding-type">Type</label>
+                        <select id="feeding-type" required>
+                            <option value="Breastfeeding">Breastfeeding</option>
+                            <option value="Bottle (Formula)">Bottle (Formula)</option>
+                            <option value="Bottle (Breast Milk)">Bottle (Breast Milk)</option>
+                            <option value="Solids">Solids</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="amount">Amount (oz / ml / description)</label>
+                        <input type="text" id="amount" placeholder="e.g., 4oz, half jar">
+                    </div>
+                    <div class="input-group">
+                        <label for="feeding-time">Time</label>
+                        <input type="datetime-local" id="feeding-time" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="feeding-notes">Notes</label>
+                        <textarea id="feeding-notes" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">➕ Add Feeding</button>
+                </form>
+            </div>
+
+            <div class="alarm-card" id="feeding-alarms-card">
+                <h3>⏰ Multiple Feeding Alarms (different sound)</h3>
+                <div class="flex-row" style="margin-bottom:1rem;">
+                    <input type="time" id="feeding-alarm-time" step="60" style="flex:2; padding:0.6rem;">
+                    <input type="text" id="feeding-alarm-label" placeholder="Label, e.g., Morning feed" style="flex:3; padding:0.6rem;">
+                    <button id="add-feeding-alarm-btn" class="btn-primary">➕ Add Alarm</button>
+                </div>
+                <div id="feeding-alarms-list"></div>
+                <div class="small-text" style="margin-top:0.8rem;">🔔 Each feeding alarm triggers once per day at the set time. The sound is a fast, high‑pitched beep (different from sleep alarm).</div>
+            </div>
+
+            <div class="data-section">
+                <h3>📋 Feeding History</h3>
+                <ul id="logs-list" class="data-list"></ul>
+            </div>
+        </main>
+    </div>
+
+    <script src="/public/js/app.js"></script>
+    <script src="/public/js/sidebar.js"></script>
+    <script>
+        (function() {
+            const Storage = {
+                getLogs(key) {
+                    const raw = localStorage.getItem(key);
+                    return raw ? JSON.parse(raw) : [];
+                },
+                addLog(key, entry) {
+                    const logs = this.getLogs(key);
+                    logs.push({ ...entry, id: Date.now() });
+                    localStorage.setItem(key, JSON.stringify(logs));
+                }
+            };
+
+            const FeedingAudio = (function() {
+                let audioCtx = null;
+                async function init() {
+                    if (audioCtx) return audioCtx;
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    return audioCtx;
+                }
+                async function resume() {
+                    if (!audioCtx) await init();
+                    if (audioCtx.state === 'suspended') await audioCtx.resume();
+                }
+                function playFeedingAlarm() {
+                    if (!audioCtx || audioCtx.state !== 'running') return;
+                    let count = 0;
+                    function beep() {
+                        if (count >= 10) return;
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.type = 'triangle';
+                        osc.frequency.value = 1400;
+                        gain.gain.value = 0.2;
+                        const now = audioCtx.currentTime;
+                        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+                        osc.start();
+                        osc.stop(now + 0.15);
+                        count++;
+                        setTimeout(beep, 220);
+                    }
+                    beep();
+                }
+                return {
+                    initAndResume: async () => { await init(); await resume(); },
+                    triggerAlarm: () => { playFeedingAlarm(); }
+                };
+            })();
+
+            let feedingAlarms = [];
+            let alarmCheckInterval = null;
+
+            function getTodayKey() {
+                const d = new Date();
+                return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+            }
+
+            function saveFeedingAlarms() {
+                localStorage.setItem('feeding_alarms_config', JSON.stringify(feedingAlarms));
+            }
+
+            function loadFeedingAlarms() {
+                const stored = localStorage.getItem('feeding_alarms_config');
+                if (stored) {
+                    try { feedingAlarms = JSON.parse(stored); } catch(e) { feedingAlarms = []; }
+                } else {
+                    feedingAlarms = [];
+                }
+                renderAlarmsList();
+            }
+
+            function renderAlarmsList() {
+                const container = document.getElementById('feeding-alarms-list');
+                if (!container) return;
+                if (feedingAlarms.length === 0) {
+                    container.innerHTML = '<div class="empty-state">⏰ No feeding alarms. Add one above.</div>';
+                    return;
+                }
+                const today = getTodayKey();
+                container.innerHTML = feedingAlarms.map(alarm => `
+                    <div class="alarm-item">
+                        <div>
+                            <strong>⏰ ${alarm.hour.toString().padStart(2,'0')}:${alarm.minute.toString().padStart(2,'0')}</strong>
+                            ${alarm.label ? ` · ${alarm.label}` : ''}
+                            <div class="small-text">${alarm.lastTriggerDay === today ? '✅ triggered today' : '⏳ pending today'}</div>
+                        </div>
+                        <button class="remove-alarm-btn" data-id="${alarm.id}" style="background:#ffe1de;">🗑️ Remove</button>
+                    </div>
+                `).join('');
+                document.querySelectorAll('.remove-alarm-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = Number(btn.getAttribute('data-id'));
+                        feedingAlarms = feedingAlarms.filter(a => a.id !== id);
+                        saveFeedingAlarms();
+                        renderAlarmsList();
+                    });
+                });
+            }
+
+            function addFeedingAlarm() {
+                const timeVal = document.getElementById('feeding-alarm-time').value;
+                if (!timeVal) { alert("Please select a time (HH:MM)"); return; }
+                const [hour, minute] = timeVal.split(':').map(Number);
+                if (isNaN(hour) || isNaN(minute)) return;
+                const label = document.getElementById('feeding-alarm-label').value.trim() || "Feeding reminder";
+                const newAlarm = {
+                    id: Date.now(),
+                    hour,
+                    minute,
+                    label,
+                    lastTriggerDay: null,
+                };
+                feedingAlarms.push(newAlarm);
+                saveFeedingAlarms();
+                renderAlarmsList();
+                document.getElementById('feeding-alarm-time').value = '';
+                document.getElementById('feeding-alarm-label').value = '';
+                alert(`Feeding alarm added at ${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')} · ${label}`);
+            }
+
+            function checkFeedingAlarms() {
+                const now = new Date();
+                const currentHour = now.getHours();
+                const currentMinute = now.getMinutes();
+                const todayKey = getTodayKey();
+                let triggered = false;
+                for (let alarm of feedingAlarms) {
+                    if (alarm.hour === currentHour && alarm.minute === currentMinute) {
+                        if (alarm.lastTriggerDay !== todayKey) {
+                            FeedingAudio.triggerAlarm();
+                            alarm.lastTriggerDay = todayKey;
+                            triggered = true;
+                            alert(`🍼 FEEDING TIME! ${alarm.label ? alarm.label : 'Baby needs feeding'} (${alarm.hour.toString().padStart(2,'0')}:${alarm.minute.toString().padStart(2,'0')})`);
+                        }
+                    }
+                }
+                if (triggered) {
+                    saveFeedingAlarms();
+                    renderAlarmsList();
+                }
+            }
+
+            function startFeedingAlarmWatcher() {
+                if (alarmCheckInterval) clearInterval(alarmCheckInterval);
+                alarmCheckInterval = setInterval(checkFeedingAlarms, 30000);
+            }
+
+            const form = document.getElementById('tracker-form');
+            const listEl = document.getElementById('logs-list');
+
+            function renderLogs() {
+                if (!listEl) return;
+                const logs = Storage.getLogs('feeding_logs');
+                if (!logs.length) { listEl.innerHTML = '<li class="empty-state">🍼 No feeding entries. Log your baby’s meals above.</li>'; return; }
+                listEl.innerHTML = logs.map(log => `<li class="data-item">🍼 ${log.type} — ${log.amount || '—'} at ${new Date(log.time).toLocaleString()} <br> 📝 ${log.notes || ''}</li>`).join('');
+            }
+
+            form?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const type = document.getElementById('feeding-type').value;
+                const amount = document.getElementById('amount').value;
+                const time = document.getElementById('feeding-time').value;
+                const notes = document.getElementById('feeding-notes').value;
+                if (!time) return;
+                Storage.addLog('feeding_logs', { type, amount, time, notes });
+                renderLogs();
+                form.reset();
+            });
+
+            document.getElementById('add-feeding-alarm-btn')?.addEventListener('click', async () => {
+                await FeedingAudio.initAndResume();
+                addFeedingAlarm();
+            });
+
+            loadFeedingAlarms();
+            startFeedingAlarmWatcher();
+            renderLogs();
+        })();
+    </script>
+</body>
+</html>
