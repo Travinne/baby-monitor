@@ -1,4 +1,4 @@
-import { Storage,} from './storage';
+import { Storage, type UserSession } from './storage';
 
 export const Auth = {
     init(): void {

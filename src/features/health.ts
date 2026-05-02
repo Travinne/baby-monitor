@@ -1,4 +1,4 @@
-import { Storage, type  } from '../core/storage';
+import { Storage, type HealthData } from '../core/storage';
 
 export const Health = {
     init(): void {
