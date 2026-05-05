@@ -6,14 +6,14 @@
     <title>Feeding Tracker + Multiple Alarms - BabyTrack</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
-<body>
+<body data-page="feeding">
     <div id="navbar"></div>
     <div class="layout-container">
         <aside id="sidebar"></aside>
         <main class="container">
             <div class="page-header">
                 <h1>🍼 Feeding Log + Smart Daily Alarms</h1>
-                <p class="small-text">Set multiple feeding alarms for different times of the day. Each alarm triggers a <strong>distinct high‑pitched ringtone</strong> (different from sleep alarm).</p>
+                <p class="small-text">Set multiple feeding alarms for different times of the day. Each alarm triggers a distinct high‑pitched ringtone.</p>
             </div>
 
             <div class="form-card">
@@ -45,14 +45,14 @@
             </div>
 
             <div class="alarm-card" id="feeding-alarms-card">
-                <h3>⏰ Multiple Feeding Alarms (different sound)</h3>
+                <h3>⏰ Multiple Feeding Alarms</h3>
                 <div class="flex-row" style="margin-bottom:1rem;">
                     <input type="time" id="feeding-alarm-time" step="60" style="flex:2; padding:0.6rem;">
                     <input type="text" id="feeding-alarm-label" placeholder="Label, e.g., Morning feed" style="flex:3; padding:0.6rem;">
                     <button id="add-feeding-alarm-btn" class="btn-primary">➕ Add Alarm</button>
                 </div>
                 <div id="feeding-alarms-list"></div>
-                <div class="small-text" style="margin-top:0.8rem;">🔔 Each feeding alarm triggers once per day at the set time. The sound is a fast, high‑pitched beep (different from sleep alarm).</div>
+                <div class="small-text" style="margin-top:0.8rem;">🔔 Each feeding alarm triggers once per day at the set time.</div>
             </div>
 
             <div class="data-section">
@@ -61,7 +61,6 @@
             </div>
         </main>
     </div>
-
     <script src="/js/app.js"></script>
     <script src="/js/sidebar.js"></script>
     <script>
