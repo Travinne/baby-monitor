@@ -27,7 +27,7 @@
             const user = users.find(u => u.email === email && u.password === pwd);
             if(user) {
                 Storage.setSession({ email: user.email, childName: user.childName, childGender: user.childGender });
-                window.location.href = '/public/pages/dashboard/home.html';
+                window.location.href = '/pages/dashboard/home.html';
             } else alert('Invalid credentials');
         },
         handleRegister() {
@@ -40,13 +40,13 @@
             users.push({ email, password: pwd, childName: name, childGender: gender });
             Storage.save('registered_users', users);
             alert('Registered! Please login.');
-            window.location.href = '/public/pages/auth/login.html';
+            window.location.href = '/pages/auth/login.html';
         },
         checkAuth() {
             const session = Storage.getSession();
             const path = window.location.pathname;
             const isAuth = path.includes('login.html') || path.includes('register.html');
-            if(!session && !isAuth) window.location.href = '/public/pages/auth/login.html';
+            if(!session && !isAuth) window.location.href = '/pages/auth/login.html';
         }
     };
     window.Auth = Auth;
@@ -60,10 +60,10 @@
                 <nav class="navbar">
                     <div class="nav-logo">👶 BabyTrack</div>
                     <ul class="nav-links">
-                        <li><a href="/public/pages/dashboard/home.html">Home</a></li>
-                        <li><a href="/public/pages/dashboard/timetable.html">Timetable</a></li>
-                        <li><a href="/public/pages/dashboard/journal.html">Journal</a></li>
-                        <li><a href="/public/pages/dashboard/settings.html">Settings</a></li>
+                        <li><a href="/pages/dashboard/home.html">Home</a></li>
+                        <li><a href="/pages/dashboard/timetable.html">Timetable</a></li>
+                        <li><a href="/pages/dashboard/journal.html">Journal</a></li>
+                        <li><a href="/pages/dashboard/settings.html">Settings</a></li>
                     </ul>
                     <div class="nav-user">
                         ${session ? `<span>${session.childName}</span>` : ''}
@@ -72,7 +72,7 @@
                 </nav>
             `;
             const logout = document.getElementById('logout-btn');
-            if(logout) logout.onclick = () => { Storage.clearSession(); window.location.href = '/public/pages/auth/login.html'; };
+            if(logout) logout.onclick = () => { Storage.clearSession(); window.location.href = '/pages/auth/login.html'; };
         }
     };
     window.UI = UI;
@@ -220,7 +220,7 @@
         const vaccineForm = document.getElementById('vaccine-form');
         const vaccineList = document.getElementById('vaccine-list');
         const emergency = document.getElementById('emergency-btn');
-        if(emergency) emergency.onclick = () => window.location.href = '/public/pages/tracking/health/appointments.html';
+        if(emergency) emergency.onclick = () => window.location.href = '/pages/tracking/health/appointments.html';
 
         function renderTemp() {
             const temps = Storage.getHealth().temperature;
