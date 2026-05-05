@@ -22,13 +22,27 @@ export const Sidebar = {
                 </ul>
             </div>
         `;
+        
         const toggle = sidebar.querySelector('.dropdown-toggle');
         if (toggle) {
             toggle.addEventListener('click', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 const menu = toggle.parentElement?.querySelector('.dropdown-menu');
-                if (menu) menu.classList.toggle('show');
+                if (menu) {
+                    menu.classList.toggle('show');
+                    const isExpanded = menu.classList.contains('show');
+                    toggle.setAttribute('aria-expanded', String(isExpanded));
+                }
             });
         }
+        
+        document.addEventListener('click', function(e) {
+            const dropdown = document.querySelector('.dropdown');
+            if (dropdown && !dropdown.contains(e.target as Node)) {
+                const menu = dropdown.querySelector('.dropdown-menu');
+                if (menu) menu.classList.remove('show');
+            }
+        });
     }
 };

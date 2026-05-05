@@ -7,8 +7,9 @@ export const UI = {
         const session = Storage.getSession();
         nav.innerHTML = `
             <nav class="navbar">
+                <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
                 <div class="nav-logo">👶 BabyTrack</div>
-                <ul class="nav-links">
+                <ul class="nav-links" id="navLinks">
                     <li><a href="/pages/dashboard/home.html">Home</a></li>
                     <li><a href="/pages/dashboard/timetable.html">Timetable</a></li>
                     <li><a href="/pages/dashboard/journal.html">Journal</a></li>
@@ -20,11 +21,42 @@ export const UI = {
                 </div>
             </nav>
         `;
+        
         const logoutBtn = document.getElementById('logout-btn');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
                 Storage.clearSession();
                 window.location.href = '/pages/auth/login.html';
+            });
+        }
+        
+        const menuToggle = document.getElementById('menuToggle');
+        const navLinks = document.getElementById('navLinks');
+        
+        if (menuToggle && navLinks) {
+            menuToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                navLinks.classList.toggle('show');
+                const isExpanded = navLinks.classList.contains('show');
+                menuToggle.setAttribute('aria-expanded', String(isExpanded));
+                menuToggle.textContent = isExpanded ? '✕' : '☰';
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (navLinks.classList.contains('show') && !nav.contains(e.target as Node)) {
+                    navLinks.classList.remove('show');
+                    menuToggle.textContent = '☰';
+                    menuToggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+            
+            const links = navLinks.querySelectorAll('a');
+            links.forEach(link => {
+                link.addEventListener('click', () => {
+                    navLinks.classList.remove('show');
+                    menuToggle.textContent = '☰';
+                    menuToggle.setAttribute('aria-expanded', 'false');
+                });
             });
         }
     }
