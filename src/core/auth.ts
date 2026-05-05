@@ -1,4 +1,4 @@
-import { Storage as CoreStorage  } from './storage';
+import { Storage } from './storage';
 
 export const Auth = {
     init(): void {
