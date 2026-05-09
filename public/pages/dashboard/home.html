@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - BabyTrack</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/public/css/style.css">
 </head>
 <body data-page="home">
     <div id="navbar"></div>
@@ -15,19 +15,51 @@
                 <h1>Welcome back!</h1>
                 <p>Quick access to your baby's routines</p>
             </div>
+            <div class="dashboard-stats"></div>
             <div class="dashboard-grid">
-                <a href="/pages/tracking/sleep.html" class="dashboard-card"><div class="card-icon">😴</div><h3>Sleep</h3></a>
-                <a href="/pages/tracking/feeding.html" class="dashboard-card"><div class="card-icon">🍼</div><h3>Feeding</h3></a>
-                <a href="/pages/tracking/diaper.html" class="dashboard-card"><div class="card-icon">🧷</div><h3>Diaper</h3></a>
-                <a href="/pages/tracking/health/overview.html" class="dashboard-card"><div class="card-icon">🩺</div><h3>Health Overview</h3></a>
-                <a href="/pages/tracking/health/medications.html" class="dashboard-card"><div class="card-icon">💊</div><h3>Medications & Vaccines</h3></a>
-                <a href="/pages/tracking/health/teething.html" class="dashboard-card"><div class="card-icon">🦷</div><h3>Teething</h3></a>
-                <a href="/pages/dashboard/timetable.html" class="dashboard-card"><div class="card-icon">📅</div><h3>Timetable</h3></a>
-                <a href="/pages/dashboard/journal.html" class="dashboard-card"><div class="card-icon">📓</div><h3>Journal</h3></a>
+                <a href="/public/pages/tracking/sleep.html" class="dashboard-card">
+                    <div class="card-icon">😴</div>
+                    <h3>Sleep</h3>
+                    <p>Track sleep patterns</p>
+                </a>
+                <a href="/public/pages/tracking/feeding.html" class="dashboard-card">
+                    <div class="card-icon">🍼</div>
+                    <h3>Feeding</h3>
+                    <p>Log meals and feedings</p>
+                </a>
+                <a href="/public/pages/tracking/diaper.html" class="dashboard-card">
+                    <div class="card-icon">🧷</div>
+                    <h3>Diaper</h3>
+                    <p>Track diaper changes</p>
+                </a>
+                <a href="/public/pages/tracking/health/overview.html" class="dashboard-card">
+                    <div class="card-icon">🩺</div>
+                    <h3>Health Overview</h3>
+                    <p>View health summary</p>
+                </a>
+                <a href="/public/pages/tracking/health/medications.html" class="dashboard-card">
+                    <div class="card-icon">💊</div>
+                    <h3>Medications</h3>
+                    <p>Track medicines & vaccines</p>
+                </a>
+                <a href="/public/pages/tracking/health/teething.html" class="dashboard-card">
+                    <div class="card-icon">🦷</div>
+                    <h3>Teething</h3>
+                    <p>Monitor teething progress</p>
+                </a>
+                <a href="/public/pages/dashboard/timetable.html" class="dashboard-card">
+                    <div class="card-icon">📅</div>
+                    <h3>Timetable</h3>
+                    <p>View calendar</p>
+                </a>
+                <a href="/public/pages/dashboard/journal.html" class="dashboard-card">
+                    <div class="card-icon">📓</div>
+                    <h3>Journal</h3>
+                    <p>Write memories</p>
+                </a>
             </div>
         </main>
     </div>
-    <script src="/js/app.js"></script>
-    <script src="/js/sidebar.js"></script>
+    <script type="module" src="/src/main.js"></script>
 </body>
 </html>

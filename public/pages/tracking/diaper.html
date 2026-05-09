@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Diaper Tracker - BabyTrack</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/public/css/style.css">
 </head>
 <body data-page="diaper">
     <div id="navbar"></div>
@@ -19,7 +18,7 @@
                 <h3>Log Diaper Change</h3>
                 <form id="tracker-form">
                     <div class="input-group">
-                        <label for="diaper-type">Type</label>
+                        <label>Type</label>
                         <select id="diaper-type" required>
                             <option value="Wet">Wet</option>
                             <option value="Dirty">Dirty</option>
@@ -28,14 +27,14 @@
                         </select>
                     </div>
                     <div class="input-group">
-                        <label for="change-time">Time</label>
+                        <label>Time</label>
                         <input type="datetime-local" id="change-time" required>
                     </div>
                     <div class="input-group">
-                        <label for="diaper-notes">Notes (e.g., rash, unusual)</label>
-                        <textarea id="diaper-notes" rows="2"></textarea>
+                        <label>Notes</label>
+                        <textarea id="diaper-notes" rows="2" placeholder="e.g., rash, unusual"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Add Change</button>
+                    <button type="submit" class="btn-primary">Add Change</button>
                 </form>
             </div>
             <div class="data-section">
@@ -44,7 +43,6 @@
             </div>
         </main>
     </div>
-    <script src="/js/app.js"></script>
-    <script src="/js/sidebar.js"></script>
+    <script type="module" src="/src/main.js"></script>
 </body>
 </html>

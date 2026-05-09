@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Medications & Vaccines - BabyTrack</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/public/css/style.css">
 </head>
 <body data-page="health-medications">
     <div id="navbar"></div>
@@ -14,14 +14,13 @@
             <div class="page-header">
                 <h1>💊 Medications & Vaccines</h1>
                 <div class="sub-nav">
-                    <a href="/pages/tracking/health/overview.html">Overview</a>
-                    <a href="/pages/tracking/health/appointments.html">Appointments</a>
-                    <a href="/pages/tracking/health/medications.html" class="active">Medications</a>
-                    <a href="/pages/tracking/health/allergies.html">Allergies</a>
-                    <a href="/pages/tracking/health/teething.html">Teething</a>
+                    <a href="/public/pages/tracking/health/overview.html">Overview</a>
+                    <a href="/public/pages/tracking/health/appointments.html">Appointments</a>
+                    <a href="/public/pages/tracking/health/medications.html" class="active">Medications</a>
+                    <a href="/public/pages/tracking/health/allergies.html">Allergies</a>
+                    <a href="/public/pages/tracking/health/teething.html">Teething</a>
                 </div>
             </div>
-
             <div class="form-card">
                 <h3>🌡️ Fever Guide</h3>
                 <div class="temp-normal">✅ Normal: 36.5–37.2°C</div>
@@ -29,7 +28,6 @@
                 <div class="temp-critical" style="margin-top: 0.5rem;">🔥 High fever: >38.0°C – seek medical attention</div>
                 <button id="emergency-btn" class="btn-danger" style="margin-top: 1rem;">🚑 Emergency → Book Appointment</button>
             </div>
-
             <div class="form-card">
                 <h3>📝 Log Temperature</h3>
                 <form id="temp-form">
@@ -57,7 +55,6 @@
                 </form>
                 <ul id="temp-list" class="data-list" style="margin-top: 1rem;"></ul>
             </div>
-
             <div class="form-card">
                 <h3>💊 Add Medication</h3>
                 <form id="med-form">
@@ -77,7 +74,6 @@
                 </form>
                 <ul id="med-list" class="data-list" style="margin-top: 1rem;"></ul>
             </div>
-
             <div class="form-card">
                 <h3>💉 Vaccination Schedule</h3>
                 <form id="vaccine-form">
@@ -103,7 +99,6 @@
             </div>
         </main>
     </div>
-    <script src="/js/app.js"></script>
-    <script src="/js/sidebar.js"></script>
+    <script type="module" src="/src/main.js"></script>
 </body>
 </html>

@@ -4,18 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings - BabyTrack</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/public/css/style.css">
 </head>
 <body data-page="settings">
     <div id="navbar"></div>
     <div class="layout-container">
         <aside id="sidebar"></aside>
         <main class="container">
-            <h1>Settings</h1>
-            <p>Profile & preferences coming soon.</p>
+            <div class="page-header">
+                <h1>⚙️ Settings</h1>
+            </div>
+            <div class="form-card">
+                <h3>Profile Information</h3>
+                <div class="input-group">
+                    <label>Child's Name</label>
+                    <input type="text" id="settings-child-name" readonly>
+                </div>
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="settings-email" readonly>
+                </div>
+            </div>
+            <div class="form-card">
+                <h3>Data Management</h3>
+                <button id="export-data-btn" class="btn-outline">📤 Export Data</button>
+                <button id="clear-data-btn" class="btn-danger" style="margin-top: 0.5rem;">🗑️ Clear All Data</button>
+            </div>
         </main>
     </div>
-    <script src="/js/app.js"></script>
-    <script src="/js/sidebar.js"></script>
+    <script type="module" src="/src/main.js"></script>
 </body>
 </html>
